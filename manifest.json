@@ -1,0 +1,63 @@
+{
+  "name": "時間表 · 2026 秋季學期",
+  "short_name": "時間表",
+  "description": "2026 秋季學期課表、溫書時段、考試日程與待辦清單，支援離線使用。",
+  "lang": "zh-Hant",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "id": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "any",
+  "background_color": "#f2f4f9",
+  "theme_color": "#2f5fd0",
+  "categories": ["productivity", "education"],
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "本週時間表",
+      "short_name": "本週",
+      "url": "./index.html?view=week"
+    },
+    {
+      "name": "待辦清單",
+      "short_name": "待辦",
+      "url": "./index.html?view=todo"
+    },
+    {
+      "name": "截止倒數",
+      "short_name": "倒數",
+      "url": "./index.html?view=countdown"
+    },
+    {
+      "name": "GPA 計算",
+      "short_name": "GPA",
+      "url": "./index.html?view=gpa"
+    },
+    {
+      "name": "每日記錄",
+      "short_name": "日記",
+      "url": "./index.html?view=diary"
+    }
+  ]
+}
