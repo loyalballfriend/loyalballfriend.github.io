@@ -6897,14 +6897,23 @@ function uploadWith(photos, inc, alreadyRetried){
           CLOUD_BUSY=false; cloudMsg('已取消上傳。'); return;
         }
       }
-      /* 順手記住雲端而家有嘅相片檔，用嚟刪走本機已經冇咗嘅（避免孤兒檔一直留喺 gist） */
-      if(inc){
+      /* 孤兒清理：雲端有、但本機冇咗嘅相片檔，用 null 刪走。
+         ⚠️⚠️ 極重要安全檢查：gist 大嘅時候，API 回傳嘅 files 會**唔完整**
+             （實測：958 KB 嘅 gist，8 個檔只回傳到 6 個，其餘 content 變空）。
+             如果照住呢份「唔完整」嘅清單去做孤兒清理，就會誤刪雲端上面
+             真實存在嘅相片 —— 直接掉資料，救唔返。
+             所以：只有確認回傳冇被截斷（gist 層級 truncated 為 false）
+             才做清理；有截斷就一律唔刪，寧願留低孤兒都唔好掉相。 */
+      var filesTruncated = !!(json && json.truncated);
+      if(inc && !filesTruncated){
         var cloudPh = phListFromFiles(json && json.files);
         var keep = {};
         (photos||[]).forEach(function(rec){ if(rec && rec.id) keep[phFileOf(rec.id)] = 1; });
         cloudPh.forEach(function(p){
           if(!keep[p.name]) body.files[p.name] = null;   /* null = 刪除該檔 */
         });
+      } else if(inc && filesTruncated){
+        console.warn('[雲端] 雲端檔案清單被截斷，今次跳過孤兒相片清理，避免誤刪');
       }
       go(); cloudPatch(body, info);
     });
@@ -6955,26 +6964,71 @@ function cloudDownload(){
   ghFetch('/gists/'+encodeURIComponent(CLOUD.gistId), null, function(err, json){
     if(err){ CLOUD_BUSY=false; cloudMsg('❌ '+esc(err),'err'); alert('讀取雲端失敗：\n'+err); return; }
     var f = (json && json.files) ? json.files[GH_FILE] : null;
-    if(!f || typeof f.content!=='string'){
+    if(!f){
       CLOUD_BUSY=false;
       cloudMsg('❌ 雲端 gist 入面搵唔到 '+GH_FILE,'err');
       alert('呢個 gist 入面冇「'+GH_FILE+'」。\n可能係填錯咗 gist id，或者嗰個 gist 唔係本 App 開嘅。');
       return;
     }
-    if(f.truncated){
-      /* ⚠️ 一定要清 CLOUD_BUSY：唔係嘅話 App 會永遠卡住「仲喺處理緊」，
-         之後撳咩掣都話「仲喺處理緊」，用戶要重開 App 先得。 */
+    /* ⚠️ 關於 truncated —— 呢度係最容易估錯嘅一環，記住實測結果：
+       GitHub 唔係「單檔超過 1 MB 才截斷」，而係**當成個 gist 嘅總量大**（大約
+       接近 1 MB）就會連細檔都一齊截斷，而且可以截到 content 變**空字串**。
+       實例：一個 gist 有 7 張相（約 985 KB）+ timetable.json 只得 3.8 KB，
+       但 API 回傳 files['timetable.json'] = { size:3921, truncated:true, content:"" }。
+       所以唔可以靠 f.content 判斷，亦唔應該一見 truncated 就放棄。
+       正確做法：只要 f.raw_url 存在，就改為經 raw_url 拎完整內容
+       —— raw_url 唔受呢個總量限制（官方講 10 MB 以下都拎得晒）。 */
+    if(f.truncated || typeof f.content!=='string' || !f.content){
+      if(f.raw_url){
+        cloudBusy('雲端檔案較大，改用完整下載…');
+        console.warn('[雲端] timetable.json 被 API 截斷，改用 raw_url 取回完整內容');
+        fetchRawText(f.raw_url, function(rerr, raw){
+          if(rerr || typeof raw!=='string' || !raw){
+            CLOUD_BUSY=false;
+            cloudMsg('❌ 完整下載都失敗','err');
+            alert('雲端嘅 '+GH_FILE+' 被 GitHub API 截斷，改用完整下載又拎唔到。\n\n'+
+                  (rerr ? '原因：'+rerr+'\n\n' : '')+
+                  '可能係網絡問題，或者呢個 gist 太大（超過 10 MB）。\n'+
+                  '請檢查網絡之後再試一次。');
+            return;
+          }
+          takeCloudText(raw, json);
+        });
+        return;
+      }
+      /* 冇 raw_url 就真係冇計 */
       CLOUD_BUSY=false;
-      cloudMsg('❌ 雲端文字檔太大，API 截斷咗','err');
-      alert('雲端嘅 '+GH_FILE+' 超過 1 MB，GitHub API 只回傳部分內容，唔敢用。\n\n'+
-            '呢個通常係舊版本（未支援壓縮）上傳嘅檔案。\n'+
-            '解決：喺有嗰份資料嘅部機，重新上傳一次——\n'+
-            '新版本會自動先用 gzip 壓縮，一般細 3–5 倍。');
+      cloudMsg('❌ 雲端檔案拎唔到完整內容','err');
+      alert('雲端嘅 '+GH_FILE+' 被 GitHub 截斷，而且冇提供完整下載連結。\n\n'+
+            '請去 gist 網頁（gist.github.com）睇下個檔案係唔係完整，\n'+
+            '或者喺有嗰份資料嘅部機重新上傳一次。');
       return;
     }
+    takeCloudText(f.content, json);
+  });
+}
+/* 經 raw_url 拎純文字內容（唔加 Authorization，raw 主機唔需要亦唔應該帶 token）。
+   同 fetchPhotos 一樣加 timeout，唔好一直吊住。 */
+function fetchRawText(url, cb){
+  var done=false;
+  var fin=function(e, t){ if(done) return; done=true; cb(e, t); };
+  var to=setTimeout(function(){ fin('下載逾時（20 秒）'); }, 20000);
+  try{
+    fetch(url, { cache:'no-store' }).then(function(res){
+      if(!res.ok){ clearTimeout(to); fin('HTTP '+res.status); return; }
+      return res.text();
+    }).then(function(txt){
+      clearTimeout(to); fin(null, txt);
+    }).catch(function(e){
+      clearTimeout(to); fin(e && e.message ? e.message : '網絡錯誤');
+    });
+  }catch(e){ clearTimeout(to); fin(e && e.message ? e.message : 'fetch 失敗'); }
+}
+/* 攞到雲端文字之後嘅共同流程：解壓 → 拎相片 → 匯入 */
+function takeCloudText(content, json){
     /* 新版本係 gzip 壓縮過嘅；舊版本係純 JSON。gzUnpack 兩者都食。 */
     cloudBusy('解壓中…');
-    gzUnpack(f.content).then(function(raw){
+    gzUnpack(content).then(function(raw){
       var pack;
       try{ pack = JSON.parse(raw); }
       catch(e){
@@ -6984,7 +7038,7 @@ function cloudDownload(){
       }
       /* 相片喺同一個 gist 入面，係獨立檔案（photo-xxx.jpg）。
          佢哋唔會跟 API 一齊回傳完整內容，要逐張經 raw_url 拎
-         —— raw_url 嘅 1 MB 截斷唔適用，10 MB 以下都拎得晒。 */
+         —— raw_url 嘅截斷問題唔適用。 */
       var phs = phListFromFiles(json && json.files);
       if(!phs.length){ finishDownload(pack); return; }
       cloudBusy('下載相片…（0/'+phs.length+'）');
@@ -7000,7 +7054,6 @@ function cloudDownload(){
       cloudMsg('❌ '+esc(m),'err');
       alert(m);
     });
-  });
 }
 /* 逐張經 raw_url 拎相片。用 sha 版本嘅 URL（raw_url 本身已經帶 sha），
    咁 GitHub CDN 就唔會回舊快取。一張失敗唔會拖垮全部，最後統計有幾多張失敗。 */
@@ -7704,7 +7757,7 @@ window.addEventListener('focus',function(){
 
   var isFile = location.protocol === 'file:';
   /* 呢個常數要同 sw.js 嘅 VERSION 一致；設定頁靠對比兩者判斷有冇新版 */
-  var APP_VER = 'v44';
+  var APP_VER = 'v45';
   var ua = navigator.userAgent || '';
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
                    || window.navigator.standalone === true;
