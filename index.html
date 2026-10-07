@@ -87,6 +87,15 @@
        padding:4px 11px;border-radius:999px;opacity:0;transition:opacity .3s;white-space:nowrap}
   .tip.on{opacity:1}
 
+  /* ---------- 左右滑動切換檢視（滑入動畫） ---------- */
+  @keyframes swInNext{from{opacity:.4;transform:translateX(32px)}to{opacity:1;transform:none}}
+  @keyframes swInPrev{from{opacity:.4;transform:translateX(-32px)}to{opacity:1;transform:none}}
+  .card.swin-next{animation:swInNext .24s cubic-bezier(.22,.61,.36,1)}
+  .card.swin-prev{animation:swInPrev .24s cubic-bezier(.22,.61,.36,1)}
+  @media (prefers-reduced-motion: reduce){
+    .card.swin-next,.card.swin-prev{animation:none}
+  }
+
   /* ---------- 卡片 ---------- */
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
         box-shadow:var(--sh);overflow:hidden}
@@ -1596,7 +1605,8 @@ var S = {
   studySessions:[],   /* 計時器記錄嘅溫書時段：{id, d:'YYYY-MM-DD', s:'HH:MM', e:'HH:MM', m:分鐘} */
   acts:[],            /* 非溫書時間記錄：{id, d:'YYYY-MM-DD', s:'HH:MM', e:'HH:MM', m:分鐘, label:'做咩'} */
   terms:null,         /* 學期：{id, name, start:'YYYY-MM-DD', weeks}；null = 用預設 */
-  termIdx:0           /* 而家睇緊邊個學期 */
+  termIdx:0,          /* 而家睇緊邊個學期 */
+  swipe:true          /* 喺內容區左右滑動切換檢視；false = 閂咗 */
 };
 var canStore = true;
 try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); }catch(e){ canStore=false; }
@@ -1631,6 +1641,7 @@ function load(){
     if(d.badgeMode==='sess'||d.badgeMode==='day'||d.badgeMode==='off') S.badgeMode=d.badgeMode;
     if(d.seedDone) S.seedDone=true;
     if(d.view==='month'||d.view==='week'||d.view==='todo'||d.view==='grade'||d.view==='countdown'||d.view==='gpa'||d.view==='diary') S.view=d.view;
+    if(typeof d.swipe==='boolean') S.swipe=d.swipe;
   }catch(e){}
 }
 var saveT=null, tipEl=document.getElementById('tip');
@@ -4154,22 +4165,29 @@ function refreshAll(){
   syncBadge();          /* 溫書時數一變就更新 App 圖示角標 */
   save();
 }
-function setView(v){
+/* 檢視次序：同工具列由左至右一致，左右滑動就照呢個次序行 */
+var VIEW_ORDER=['week','month','todo','countdown','grade','gpa','diary'];
+var VIEW_CARD={week:'weekCard',month:'monthCard',todo:'todoCard',countdown:'cdCard',
+               grade:'gradeCard',gpa:'gpaCard',diary:'diaryCard'};
+var VIEW_BTN={week:'vWeek',month:'vMonth',todo:'vTodo',countdown:'vCd',
+              grade:'vGrade',gpa:'vGpa',diary:'vDiary'};
+
+/* 滑入動畫：dir>0 = 睇下一個（由右邊入），dir<0 = 睇上一個（由左邊入） */
+function swipeAnim(cardId,dir){
+  var el=document.getElementById(cardId); if(!el) return;
+  el.classList.remove('swin-next','swin-prev');
+  void el.offsetWidth;                 /* 強制 reflow，令同一組 class 可以連續觸發 */
+  el.classList.add(dir>0?'swin-next':'swin-prev');
+  clearTimeout(el.__swT);
+  el.__swT=setTimeout(function(){ el.classList.remove('swin-next','swin-prev'); },600);
+}
+
+function setView(v,dir){
   S.view=v;
-  document.getElementById('weekCard').hidden = v!=='week';
-  document.getElementById('monthCard').hidden = v!=='month';
-  document.getElementById('todoCard').hidden = v!=='todo';
-  document.getElementById('cdCard').hidden = v!=='countdown';
-  document.getElementById('gradeCard').hidden = v!=='grade';
-  document.getElementById('gpaCard').hidden = v!=='gpa';
-  document.getElementById('diaryCard').hidden = v!=='diary';
-  document.getElementById('vWeek').classList.toggle('on',v==='week');
-  document.getElementById('vMonth').classList.toggle('on',v==='month');
-  document.getElementById('vTodo').classList.toggle('on',v==='todo');
-  document.getElementById('vCd').classList.toggle('on',v==='countdown');
-  document.getElementById('vGrade').classList.toggle('on',v==='grade');
-  document.getElementById('vGpa').classList.toggle('on',v==='gpa');
-  document.getElementById('vDiary').classList.toggle('on',v==='diary');
+  VIEW_ORDER.forEach(function(k){
+    var c=document.getElementById(VIEW_CARD[k]); if(c) c.hidden=(k!==v);
+    var b=document.getElementById(VIEW_BTN[k]); if(b) b.classList.toggle('on',k===v);
+  });
   if(v==='week') drawWeek();
   else if(v==='month') drawMonths();
   else if(v==='todo') drawTodo();
@@ -4177,8 +4195,84 @@ function setView(v){
   else if(v==='gpa') drawGpa();
   else if(v==='diary') drawDiary();
   else drawGrades();
+  if(dir) swipeAnim(VIEW_CARD[v],dir);
   save();
 }
+
+/* ================= 左右滑動切換檢視 ================= */
+var SW={ on:false, x:0, y:0, t:0, axis:0 };
+var SW_MIN=60;     /* 橫向要滑夠 60px 才當一次切換 */
+var SW_YMAX=55;    /* 終點縱向偏移大過呢個數就當捲動，唔切換 */
+var SW_TMAX=700;   /* 慢過 0.7 秒唔算（多數係拖曳選字） */
+var SW_RATIO=1.6;  /* 橫向位移要係縱向嘅 1.6 倍以上 */
+var SW_EDGE=26;    /* 貼住螢幕邊 26px 唔掂，讓返 Safari 嘅上一頁手勢 */
+
+function swipeOn(){ return S.swipe!==false; }
+
+/* 呢啲位唔應該觸發切換 */
+function swipeBlocked(target){
+  if(!target || target.nodeType!==1) return true;
+  /* 有浮層開住（抽屜／對話框／相片燈箱）就完全唔理 */
+  if(document.querySelector('.mask:not([hidden]),.modal:not([hidden])')) return true;
+  var el=target, n=0;
+  while(el && el.nodeType===1 && el!==document.body && n++<12){
+    var tag=(el.tagName||'').toLowerCase();
+    if(tag==='input'||tag==='textarea'||tag==='select') return true;
+    if(el.isContentEditable) return true;
+    var cls=el.classList;
+    if(cls && (cls.contains('bar')||cls.contains('seg')||cls.contains('drawer'))) return true;
+    if(el.scrollWidth-el.clientWidth>4){
+      var st=window.getComputedStyle?window.getComputedStyle(el):null;
+      if(st && (st.overflowX==='auto'||st.overflowX==='scroll')) return true;
+    }
+    el=el.parentElement;
+  }
+  return false;
+}
+
+/* step=+1 睇下一個，-1 睇上一個；到頭就唔動 */
+function swipeStep(step){
+  var i=VIEW_ORDER.indexOf(S.view); if(i<0) i=0;
+  var n=i+step;
+  if(n<0||n>=VIEW_ORDER.length) return false;
+  setView(VIEW_ORDER[n],step);
+  return true;
+}
+
+document.addEventListener('touchstart',function(e){
+  SW.on=false; SW.axis=0;
+  if(!swipeOn() || e.touches.length!==1) return;
+  var t=e.touches[0];
+  if(t.clientX<SW_EDGE || t.clientX>window.innerWidth-SW_EDGE) return;
+  if(swipeBlocked(e.target)) return;
+  SW.on=true; SW.x=t.clientX; SW.y=t.clientY; SW.t=Date.now();
+},{passive:true});
+
+document.addEventListener('touchmove',function(e){
+  if(!SW.on || e.touches.length!==1) return;
+  var t=e.touches[0], dx=t.clientX-SW.x, dy=t.clientY-SW.y;
+  if(!SW.axis){
+    if(Math.abs(dx)<12 && Math.abs(dy)<12) return;      /* 未夠明顯，再等 */
+    SW.axis = Math.abs(dx) > Math.abs(dy)*SW_RATIO ? 1 : -1;
+  }
+  /* 確定係橫向之後，食住呢個 touchmove，唔畀瀏覽器當成橫向拖動 */
+  if(SW.axis===1 && e.cancelable) e.preventDefault();
+},{passive:false});
+
+document.addEventListener('touchend',function(e){
+  if(!SW.on) return;
+  SW.on=false;
+  if(SW.axis!==1) return;
+  var t=e.changedTouches && e.changedTouches[0]; if(!t) return;
+  var dx=t.clientX-SW.x, dy=t.clientY-SW.y;
+  if(Date.now()-SW.t>SW_TMAX) return;
+  if(Math.abs(dy)>SW_YMAX) return;
+  if(Math.abs(dx)<SW_MIN) return;
+  if(Math.abs(dx) < Math.abs(dy)*SW_RATIO) return;
+  swipeStep(dx<0?1:-1);        /* 手指向左 = 睇右邊嗰個（下一個） */
+},{passive:true});
+
+document.addEventListener('touchcancel',function(){ SW.on=false; SW.axis=0; },{passive:true});
 
 /* ================= 互動 ================= */
 document.getElementById('prev').addEventListener('click',function(){
@@ -5068,6 +5162,14 @@ function drawSettings(){
      [['auto','跟系統'],['light','淺色'],['dark','深色']].map(function(o){
        return '<button data-t="'+o[0]+'"'+(t===o[0]?' class="on"':'')+'>'+o[1]+'</button>';
      }).join('')+'</div></div>';
+  h+='<div class="fld"><label>手勢操作</label>'+
+     '<label class="cpchk"><input type="checkbox" id="setSwipe"'+(S.swipe!==false?' checked':'')+'>'+
+     '<span>喺內容區<b>向左／右滑</b>切換檢視</span></label>'+
+     '<div class="bkinfo" style="margin-top:8px">次序跟工具列一樣：'+
+     '週視圖 → 月總覽 → 待辦 → 倒數 → 成績 → GPA → 日記。<br>'+
+     '手勢要夠<b>橫</b>才會觸發（斜過約 30° 就當係捲動）；'+
+     '喺輸入框、按鈕列、彈出視窗同螢幕最左右邊緣都<b>唔會</b>生效。'+
+     '如果覺得容易誤觸，喺度閂咗佢就得。</div></div>';
   h+='<div class="fld"><label>溫書目標</label>'+
      '<div class="minrow">'+
        '<input type="number" id="setMin" min="0" max="80" step="0.5" inputmode="decimal" '+
@@ -5146,6 +5248,8 @@ function drawSettings(){
     var b=e.target.closest('button[data-t]'); if(!b) return;
     setTheme(b.dataset.t); drawSettings();
   });
+  var swEl=document.getElementById('setSwipe');
+  if(swEl) swEl.addEventListener('change',function(){ S.swipe=!!this.checked; save(); });
   var b3=document.getElementById('badge3');
   if(b3) b3.addEventListener('click',function(e){
     var b=e.target.closest('button[data-b]'); if(!b) return;
@@ -5355,7 +5459,7 @@ window.addEventListener('focus',function(){
 
   var isFile = location.protocol === 'file:';
   /* 呢個常數要同 sw.js 嘅 VERSION 一致；設定頁靠對比兩者判斷有冇新版 */
-  var APP_VER = 'v34';
+  var APP_VER = 'v35';
   var ua = navigator.userAgent || '';
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
                    || window.navigator.standalone === true;
