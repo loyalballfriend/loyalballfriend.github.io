@@ -483,16 +483,21 @@
   .tsec.late{color:#d93a3f}
   .tsec.late .n{background:#ffe9e9;color:#d93a3f}
   .tdrow{display:flex;align-items:center;gap:11px;padding:9px 12px;border:1px solid var(--line);
-         border-radius:11px;margin-bottom:7px;transition:.15s;background:#fff}
+         border-radius:11px;margin-bottom:7px;transition:.15s;background:#fff;
+         flex-wrap:wrap;row-gap:8px}
   .tdrow:hover{border-color:var(--line2);background:#fafbfe}
   .tdrow.done{opacity:.5}
   .tdrow input[type=checkbox]{width:17px;height:17px;accent-color:#31a24c;cursor:pointer;flex:0 0 auto}
-  .tdrow .txt{flex:1;min-width:0;font-size:14px;outline:none;padding:2px 4px;border-radius:6px;
-              word-break:break-word}
+  /* ⚠ .txt 一定要有 min-width，唔可以淨係 flex:1；v42 加咗延後／釘住／
+     日期徽章之後固定寬度嘅兄弟多咗，窄螢幕上會將文字欄壓到得一兩隻字闊，
+     變成「每行一個字」。加咗 flex-basis 同 min-width 之後就會正常換行。 */
+  .tdrow .txt{flex:1 1 140px;min-width:110px;font-size:14px;outline:none;padding:2px 4px;
+              border-radius:6px;word-break:break-word}
   .tdrow .txt:focus{background:var(--accent-soft)}
   .tdrow.done .txt{text-decoration:line-through}
   .tdrow input[type=date]{border:1px solid transparent;background:transparent;font-size:12.5px;
-       font-family:inherit;color:var(--muted);padding:4px 6px;border-radius:7px;cursor:pointer;width:132px}
+       font-family:inherit;color:var(--muted);padding:4px 6px;border-radius:7px;cursor:pointer;
+       width:132px;flex:0 0 auto;max-width:100%}
   .tdrow input[type=date]:hover{border-color:var(--line2);background:#fff}
   .tdrow input[type=date].due-soon{color:#c9760a;font-weight:600}
   .tdrow input[type=date].due-late{color:#d93a3f;font-weight:600}
@@ -1276,6 +1281,106 @@
   .theme3 button.on{background:var(--accent);color:#fff}
   html[data-theme="dark"] .theme3 button{background:#1c222d}
   html[data-theme="dark"] .theme3 button.on{background:var(--accent);color:#0e1219}
+  /* 科目顏色／圖示 */
+  .subjic{font-style:normal;margin-right:3px;font-size:1.02em;line-height:1}
+  .subjpref{margin-top:9px;max-height:250px;overflow:auto;border:1px solid var(--line2);
+            border-radius:10px;background:var(--panel)}
+  .spgrid{display:flex;flex-direction:column}
+  .sprow{display:flex;align-items:center;gap:9px;padding:8px 11px;font-size:13px}
+  .sprow+.sprow{border-top:1px solid var(--line2)}
+  .spdot{width:22px;height:22px;border-radius:6px;flex:none;display:flex;
+         align-items:center;justify-content:center;color:#fff;font-size:12px}
+  .spdot .subjic{margin:0;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.25)}
+  .spname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+          font-weight:500;color:var(--text)}
+  .spmeta{font-size:11.5px;color:var(--muted);flex:none}
+  .sbtn{border:1px solid var(--line2);background:transparent;color:var(--text);
+        font-family:inherit;font-size:12px;padding:4px 10px;border-radius:7px;cursor:pointer;flex:none}
+  .sbtn:hover{border-color:var(--accent);color:var(--accent)}
+  .sbtn.ghost{color:var(--muted)}
+  .subssws{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+  .subssws button{width:38px;height:30px;border-radius:8px;border:1px solid var(--line2);
+                  cursor:pointer;font-family:inherit;font-size:11.5px;color:var(--muted)}
+  .subssws button.on{box-shadow:0 0 0 2px var(--accent);color:var(--text)}
+  .subssws button[data-c=""]{width:auto;padding:0 11px;background:transparent}
+  .spicons{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+  .spicons button{width:36px;height:34px;border-radius:8px;border:1px solid var(--line2);
+                  background:transparent;cursor:pointer;font-size:16px;font-family:inherit;
+                  color:var(--muted)}
+  .spicons button.on{border-color:var(--accent);background:var(--accent);color:#fff}
+  .spicons button[data-i=""]{font-size:11.5px}
+  .spinput{margin-top:6px;width:100%;padding:7px 9px;border:1px solid var(--line2);
+           border-radius:8px;font-family:inherit;font-size:13px;background:transparent;
+           color:var(--text)}
+  html[data-theme="dark"] .subjpref{background:#151a23}
+  /* 待辦：優先次序相關 */
+  .tdrow.urg{border-left:3px solid #d9534f}
+  html[data-theme="dark"] .tdrow.urg{border-left-color:#ff8f8f}
+  .snz{flex:none;border:1px solid var(--line2);background:transparent;color:var(--muted);
+       font-family:inherit;font-size:11px;padding:3px 7px;border-radius:6px;cursor:pointer}
+  .snz:hover{border-color:var(--accent);color:var(--accent)}
+  .pin{flex:none;border:none;background:transparent;cursor:pointer;font-size:15px;
+       padding:0 2px;color:#c3cad7;line-height:1}
+  .pin:hover{color:#e0a53c}
+  .pin.on{color:#e0a53c}
+  html[data-theme="dark"] .pin{color:#5a6377}
+  html[data-theme="dark"] .pin.on{color:#f0c05a}
+  /* 快捷鍵說明表 */
+  .keytbl{display:flex;flex-direction:column;border:1px solid var(--line2);border-radius:10px;
+          overflow:hidden;margin-top:2px}
+  .keyrow{display:flex;align-items:center;gap:12px;padding:8px 12px;font-size:13px}
+  .keyrow+.keyrow{border-top:1px solid var(--line2)}
+  .keyrow kbd{flex:none;min-width:34px;text-align:center;padding:3px 8px;font-size:11.5px;
+              font-family:var(--mono,ui-monospace,Menlo,Consolas,monospace);
+              border:1px solid var(--line2);border-bottom-width:2px;border-radius:6px;
+              background:var(--bg);color:var(--text)}
+  .keyrow span{color:var(--muted)}
+  /* 全域搜尋 */
+  .sqinput{width:100%;padding:11px 13px;border:1px solid var(--line2);border-radius:10px;
+           font-family:inherit;font-size:15px;background:transparent;color:var(--text);margin-top:2px}
+  .sqinput:focus{outline:none;border-color:var(--accent);
+                 box-shadow:0 0 0 3px var(--accent-soft)}
+  .sqhint{margin-top:8px;font-size:12px;color:var(--muted)}
+  .sqlist{margin-top:9px;max-height:52vh;overflow:auto;
+          border:1px solid var(--line2);border-radius:10px}
+  .sqlist:empty{display:none}
+  .sqrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+         border:none;background:transparent;padding:9px 11px;cursor:pointer;
+         font-family:inherit;color:var(--text)}
+  .sqrow+.sqrow{border-top:1px solid var(--line2)}
+  .sqrow:hover{background:var(--accent-soft)}
+  .sqb{width:22px;height:22px;border-radius:6px;flex:none;display:flex;align-items:center;
+       justify-content:center;font-size:11px;font-weight:500;color:#fff;background:#93a0b4}
+  .sqb-course{background:#5F93E6}
+  .sqb-oneoff{background:#43B6AE}
+  .sqb-todo{background:#E39A55}
+  .sqb-deadline{background:#d9534f}
+  .sqb-grade{background:#AC70E4}
+  .sqb-gpa{background:#77BB3F}
+  .sqb-diary{background:#E57A85}
+  .sqb-session{background:#4aa8a0}
+  .sqm{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .sqm b{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sqm span{font-size:11.5px;color:var(--muted);overflow:hidden;
+            text-overflow:ellipsis;white-space:nowrap}
+  .sqm mark{background:#ffe9a8;color:inherit;border-radius:2px;padding:0 1px}
+  .sqgo{color:var(--muted);font-size:16px;flex:none}
+  .sqempty{padding:22px 12px;text-align:center;color:var(--muted);font-size:13px}
+  html[data-theme="dark"] .sqm mark{background:#5a4a1a;color:#ffe9a8}
+  /* 跳去結果之後嘅短暫highlight */
+  .flashrow{animation:flashbg 2s ease-out}
+  .flashday{animation:flashcol 2s ease-out}
+  @keyframes flashbg{0%{background:var(--accent-soft)}100%{background:transparent}}
+  @keyframes flashcol{0%{background:var(--accent-soft)}100%{background:transparent}}
+  @media (prefers-reduced-motion:reduce){
+    .flashrow,.flashday{animation:none}
+  }
+  /* 設定頁：匯出 .ics */
+  .sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));
+         gap:6px;margin-top:9px}
+  .icsta{margin-top:8px;width:100%;font-family:var(--mono,ui-monospace,Menlo,Consolas,monospace);
+         font-size:11px;border:1px solid var(--line2);border-radius:8px;padding:8px;
+         background:transparent;color:var(--muted);resize:vertical}
   /* 設定對話框：溫書下限輸入 */
   .minrow{display:flex;align-items:center;gap:9px}
   .minrow input{flex:0 0 96px;width:96px;font-variant-numeric:tabular-nums}
@@ -1384,6 +1489,7 @@
       <button id="vDiary">日記</button>
     </div>
     <button class="btn" id="btnList">項目清單</button>
+    <button class="btn" id="btnFind" title="全域搜尋（/）">🔍 搜尋</button>
     <button class="btn pri" id="btnAdd">＋ 新增</button>
     <button class="btn" id="btnTimer" title="溫書計時器：開住計時，離開 App 都照計，停就自動記錄（取至最近分鐘）">溫書計時</button>
     <button class="btn" id="btnSet" title="外觀同備份">設定</button>
@@ -1606,6 +1712,9 @@ var PAL_DARK = {
 };
 var PAL = PAL_LIGHT;
 var TAGS = {class:'固定課堂', study:'溫書時段', sess:'計時記錄', exam:'考試'};
+/* 匯出 .ics 相關：提醒分鐘數（0 = 唔加 VALARM）、上次匯出結果（設定頁顯示用） */
+var ICS_ALARM = 10;
+var ICS_LAST = null;
 
 /* ================= 小工具 ================= */
 function p2(n){ return n<10 ? '0'+n : ''+n; }
@@ -1763,7 +1872,8 @@ var S = {
   acts:[],            /* 非溫書時間記錄：{id, d:'YYYY-MM-DD', s:'HH:MM', e:'HH:MM', m:分鐘, label:'做咩'} */
   terms:null,         /* 學期：{id, name, start:'YYYY-MM-DD', weeks}；null = 用預設 */
   termIdx:0,          /* 而家睇緊邊個學期 */
-  swipe:true          /* 喺內容區左右滑動切換檢視；false = 閂咗 */
+  swipe:true,         /* 喺內容區左右滑動切換檢視；false = 閂咗 */
+  subjectPref:{}      /* 自訂科目外觀：{ '科目代號': {color:'blue', icon:'📐'} } */
 };
 var canStore = true;
 try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); }catch(e){ canStore=false; }
@@ -1803,6 +1913,7 @@ function load(){
     if(d.seedDone) S.seedDone=true;
     if(d.view==='month'||d.view==='week'||d.view==='todo'||d.view==='grade'||d.view==='countdown'||d.view==='gpa'||d.view==='diary') S.view=d.view;
     if(typeof d.swipe==='boolean') S.swipe=d.swipe;
+    if(d.subjectPref&&typeof d.subjectPref==='object'&&!Array.isArray(d.subjectPref)) S.subjectPref=d.subjectPref;
   }catch(e){}
 }
 var saveT=null, tipEl=document.getElementById('tip');
@@ -2940,6 +3051,7 @@ function drawWeek(){
     var day=addD(mon0,c);
     var col=document.createElement('div');
     col.className='col '+(c>=5?'wk ':'')+(isToday(day)?'today':'');
+    col.dataset.date=ymd(day);   /* 全域搜尋跳過嚟嘅時候，要用嚟 flash 嗰一日 */
 
     var hr='';
     for(var m2=DAY_FROM*60;m2<=DAY_TO*60;m2+=30){
@@ -2948,7 +3060,7 @@ function drawWeek(){
     col.innerHTML=hr;
 
     layout(evOn(day)).forEach(function(it){
-      var e=it.e, p=PAL[e.color]||PAL.gray;
+      var e=it.e, p=PAL[evColor(e)]||PAL.gray;
       var top=(s2m(e.start)-DAY_FROM*60)/60*PXH;
       var hgt=Math.max((s2m(e.end)-s2m(e.start))/60*PXH,24);
       var w=100/it.lanes, left=it.lane*w;
@@ -2962,7 +3074,7 @@ function drawWeek(){
       b.className=cls;
       b.style.cssText='top:'+top+'px;height:'+hgt+'px;width:calc('+w+'% - 6px);'+
         'left:calc('+left+'% + 3px);background:'+p.bg+';border-color:'+p.bd+';color:'+p.tx;
-      b.innerHTML='<b>'+esc(e.code)+'</b>'+(e.sec?'<i>'+esc(e.sec)+'</i>':'')+
+      b.innerHTML='<b>'+iconHtml(e.code)+esc(e.code)+'</b>'+(e.sec?'<i>'+esc(e.sec)+'</i>':'')+
         '<em>'+e.start+'–'+e.end+
         (e.kind==='session'||e.kind==='act'
           ? ' · '+hTxt(e.src&&e.src.m)+' 小時'
@@ -3068,14 +3180,14 @@ function drawMonths(){
         html+='<td class="'+(out?'out ':'')+(isToday(cur)?'today':'')+'" data-date="'+ds+'">'+
               '<span class="dn">'+cur.getDate()+(tds?'<span class="tddot"></span>':'')+'</span>';
         evs.slice(0,3).forEach(function(e){
-          var p=PAL[e.color]||PAL.gray;
+          var p=PAL[evColor(e)]||PAL.gray;
           var c2='chip'+(e.tag==='exam'?' exam':e.tag==='study'?' study':e.tag==='sess'?' sess':'');
           /* 手機月格每欄得 ~45px，課號（'FINA 2303'）一定會被 text-overflow 截。
              加 title 令懸停／長按睇得返全個課號、班別、時間、地點。 */
           var ct=e.code+(e.sec?(' · '+e.sec):'')+(e.start?(' · '+e.start+(e.end?('–'+e.end):'')):'')+
                  (e.room?(' · '+e.room):'');
           html+='<span class="'+c2+'" title="'+esc(ct)+'" style="background:'+p.bg+';border-left-color:'+p.bd+
-                ';color:'+p.tx+'">'+esc(e.code)+'</span>';
+                ';color:'+p.tx+'">'+iconHtml(e.code)+esc(e.code)+'</span>';
         });
         if(evs.length>3) html+='<span class="more">+'+(evs.length-3)+'</span>';
         html+='</td>';
@@ -3108,6 +3220,49 @@ function dueClass(t){
   if(d===td) return 'due-soon';
   var diff=(new Date(d+'T00:00:00')-new Date(td+'T00:00:00'))/864e5;
   return diff<=3 ? 'due-soon' : '';
+}
+/* ---------- 待辦優先次序 ----------
+   排序分數越細越先做。唔止按日期，仲會考慮：
+   · 已經逾期 → 一定要浮上面（而且逾期越耐越前）
+   · 今日到期 → 其次
+   · 未來 7 天 → 按日子排
+   · 冇截止日 → 沉底（但喺組內按「幾時加」排，舊嘅先）
+   另加一個「急」旗標：逾期／今日到期自動當急，用戶亦可以自己釘住。 */
+function todoUrgent(t){
+  if(t.done) return false;
+  if(t.pin) return true;
+  if(!t.due) return false;
+  return t.due<=todayStr();      /* 逾期或者今日到期 */
+}
+/* 分數：細 = 先做。加減都用整數，避免浮點比較嘅不確定。 */
+function todoScore(t){
+  var td=todayStr();
+  if(t.done) return 900000;                      /* 已完成永遠沉底 */
+  if(!t.due) return 800000 + (+t.added||0)/1e6;   /* 冇截止日：按加入次序 */
+  var diff=cdDayDiff(t.due);                      /* 負 = 已過 */
+  if(diff<0)  return 1000 + diff;                 /* 越逾得耐越細 → 越前 */
+  if(diff===0) return 2000;
+  if(diff<=3)  return 3000 + diff;
+  if(diff<=7)  return 4000 + diff;
+  return 5000 + diff;                             /* 之後：按日子 */
+}
+function todoSortList(arr){
+  return arr.slice().sort(function(a,b){
+    var d=todoScore(a)-todoScore(b);
+    if(d) return d;
+    return String(a.text||'').localeCompare(String(b.text||''));
+  });
+}
+/* 一鍵延期：+1 日／+1 週。
+   兩個唔同情況要分清楚：
+   · 本來有截止日（而且未過）→ 由原本嗰日再推後，唔會縮短。
+   · 本來冇截止日或者已經過期 → 由「今日」起算。
+   · days === 0 特別處理：直接設做今日（無日期項目嗰粒「今日」掣就用呢個）。 */
+function todoSnooze(t, days){
+  if(days===0){ t.due=todayStr(); return; }
+  var base=(t.due && t.due>=todayStr()) ? t.due : todayStr();
+  var d=addD(new Date(base+'T00:00:00'), days);
+  t.due=ymd(d);
 }
 /* 待辦剩餘天數標籤（倒數） */
 function todoCd(t){
@@ -3151,25 +3306,27 @@ function drawTodo(){
     return;
   }
 
-  function sortByDue(a,b){
-    if(!a.due&&!b.due) return 0;
-    if(!a.due) return 1;
-    if(!b.due) return -1;
-    return a.due<b.due?-1:1;
-  }
-  var gLate=open.filter(function(t){ return t.due && t.due<td; }).sort(sortByDue);
-  var gToday=open.filter(function(t){ return t.due===td; });
-  var gSoon=open.filter(function(t){ return t.due && t.due>td && t.due<=weekEnd; }).sort(sortByDue);
-  var gLater=open.filter(function(t){ return t.due && t.due>weekEnd; }).sort(sortByDue);
-  var gNone=open.filter(function(t){ return !t.due; });
+  /* 分組：唔再淨係按日期硬切，而係跟 todoScore 排好之後再分組，
+     咁「急」嘅嘢（逾期 + 今日到期 + 自己釘住）先至真正浮到最上。 */
+  var openSorted=todoSortList(open);
+  var gUrg=openSorted.filter(function(t){ return todoUrgent(t); });
+  var gRest=openSorted.filter(function(t){ return !todoUrgent(t); });
 
   function row(t){
     var dc=dueClass(t);
-    return '<div class="tdrow'+(t.done?' done':'')+'" data-id="'+t.id+'">'+
+    var urgent=todoUrgent(t);
+    var snooze = t.due
+      ? '<button class="snz" data-act="snooze" data-d="1" title="延後 1 日">+1日</button>'+
+        '<button class="snz" data-act="snooze" data-d="7" title="延後 1 週">+1週</button>'
+      : '<button class="snz" data-act="snooze" data-d="0" title="設做今日">今日</button>';
+    return '<div class="tdrow'+(t.done?' done':'')+(urgent?' urg':'')+'" data-id="'+t.id+'">'+
       '<input type="checkbox" data-act="toggle"'+(t.done?' checked':'')+'>'+
       '<span class="txt" contenteditable="true" spellcheck="false" data-act="text">'+esc(t.text)+'</span>'+
       '<input type="date" class="'+dc+'" value="'+(t.due||'')+'" data-act="due">'+
       todoCd(t)+
+      snooze+
+      '<button class="pin'+(t.pin?' on':'')+'" data-act="pin" title="'+
+        (t.pin?'取消釘住':'釘住（當佢最緊要）')+'">'+(t.pin?'★':'☆')+'</button>'+
       '<button class="del" data-act="del" title="刪除">✕</button></div>';
   }
   function sec(title,arr,cls){
@@ -3177,19 +3334,25 @@ function drawTodo(){
     return '<div class="tsec '+(cls||'')+'">'+title+'<span class="n">'+arr.length+'</span></div>'+
            arr.map(row).join('');
   }
+  /* 已完成：按「幾時完成／加入」倒序，最近完成嘅最上 */
+  var doneSorted=done.slice().sort(function(a,b){
+    var x=(+b.doneAt)||(+b.added)||0, y=(+a.doneAt)||(+a.added)||0;
+    return x-y;
+  });
   box.innerHTML =
-    sec('已逾期', gLate, 'late') +
-    sec('今日到期', gToday) +
-    sec('未來 7 天', gSoon) +
-    sec('之後', gLater) +
-    sec('未設截止日', gNone) +
-    sec('已完成', done);
+    sec('要即刻做', gUrg, 'late') +
+    sec('跟住做', gRest) +
+    sec('已完成', doneSorted);
 }
 
 document.getElementById('todoBody').addEventListener('change',function(e){
   var el=e.target, r=el.closest('.tdrow'); if(!r) return;
   var t=S.todos.filter(function(x){ return x.id===r.dataset.id; })[0]; if(!t) return;
-  if(el.dataset.act==='toggle'){ t.done=el.checked; refreshTodo(); }
+  if(el.dataset.act==='toggle'){
+    t.done=el.checked;
+    t.doneAt = t.done ? Date.now() : null;   /* 記低幾時完成，用嚟排已完成清單 */
+    refreshTodo();
+  }
   else if(el.dataset.act==='due'){ t.due=el.value; refreshTodo(); }
 });
 document.getElementById('todoBody').addEventListener('blur',function(e){
@@ -3203,10 +3366,25 @@ document.getElementById('todoBody').addEventListener('blur',function(e){
   }
 },true);
 document.getElementById('todoBody').addEventListener('click',function(e){
-  var el=e.target.closest('[data-act=del]'); if(!el) return;
-  var r=el.closest('.tdrow');
-  S.todos=S.todos.filter(function(x){ return x.id!==r.dataset.id; });
-  refreshTodo();
+  var el=e.target.closest('[data-act]'); if(!el) return;
+  var r=el.closest('.tdrow'); if(!r) return;
+  var t=S.todos.filter(function(x){ return x.id===r.dataset.id; })[0]; if(!t) return;
+  var act=el.dataset.act;
+  if(act==='del'){
+    S.todos=S.todos.filter(function(x){ return x.id!==r.dataset.id; });
+    refreshTodo();
+  }
+  else if(act==='snooze'){
+    /* ⚠ 唔可以寫 +el.dataset.d||1：'0' 轉數字係 0，falsy，
+       會被 ||1 蓋成「延後 1 日」，令「今日」掣永遠設成聽日。 */
+    var dv=parseInt(el.dataset.d,10);
+    todoSnooze(t, isFinite(dv)?dv:1);
+    refreshTodo();
+  }
+  else if(act==='pin'){
+    t.pin=!t.pin; if(!t.pin) delete t.pin;
+    refreshTodo();
+  }
 });
 document.getElementById('todoBody').addEventListener('keydown',function(e){
   if(e.key==='Enter'&&e.target.dataset.act==='text'){ e.preventDefault(); e.target.blur(); }
@@ -3215,7 +3393,7 @@ document.getElementById('todoBody').addEventListener('keydown',function(e){
 function addTodo(){
   var inp=document.getElementById('tdNew'), due=document.getElementById('tdNewDue');
   var v=inp.value.trim(); if(!v) { inp.focus(); return; }
-  S.todos.push({id:uid(), text:v, due:due.value||'', done:false});
+  S.todos.push({id:uid(), text:v, due:due.value||'', done:false, added:Date.now()});
   inp.value=''; due.value=''; inp.focus();
   refreshTodo();
 }
@@ -4613,9 +4791,9 @@ function drawList(){
     if(!arr.length) return;
     h+='<div class="gsec">'+TAGS[tag]+'　<span style="color:#c3cad7;font-weight:400">'+arr.length+'</span></div>';
     arr.forEach(function(c){
-      var p=PAL[c.color]||PAL.gray;
+      var p=PAL[effColor(c.code,c.color)]||PAL.gray;
       h+='<div class="crow"><span class="dot" style="background:'+p.bd+'"></span>'+
-         '<span class="inf"><b>'+esc(c.code)+(c.sec?' '+esc(c.sec):'')+'</b>'+
+         '<span class="inf"><b>'+iconHtml(c.code)+esc(c.code)+(c.sec?' '+esc(c.sec):'')+'</b>'+
          '<span>'+DOW[c.day-1]+' '+c.start+'–'+c.end+(c.room?' · '+esc(c.room):'')+
          ' · '+ds2cn(c.from)+' 至 '+ds2cn(c.until)+'</span></span>'+
          '<span class="acts"><button data-act="edit" data-id="'+c.id+'">編輯</button>'+
@@ -4625,9 +4803,9 @@ function drawList(){
   if(S.oneOff.length){
     h+='<div class="gsec">單次活動　<span style="color:#c3cad7;font-weight:400">'+S.oneOff.length+'</span></div>';
     S.oneOff.slice().sort(function(a,b){ return a.date<b.date?-1:1; }).forEach(function(o){
-      var p=PAL[o.color]||PAL.gray;
+      var p=PAL[effColor(o.code,o.color)]||PAL.gray;
       h+='<div class="crow"><span class="dot" style="background:'+p.bd+'"></span>'+
-         '<span class="inf"><b>'+esc(o.code)+(o.sec?' '+esc(o.sec):'')+'</b>'+
+         '<span class="inf"><b>'+iconHtml(o.code)+esc(o.code)+(o.sec?' '+esc(o.sec):'')+'</b>'+
          '<span>'+ds2cn(o.date)+' '+o.start+'–'+o.end+
          (o.tag&&o.tag!=='class'?' · '+TAGS[o.tag]:'')+
          (o.room?' · '+esc(o.room):'')+'</span></span>'+
@@ -4663,17 +4841,106 @@ document.getElementById('btnExtend').addEventListener('click',function(){
 
 /* ================= 彈窗 ================= */
 var modal=document.getElementById('modal'), dlg=document.getElementById('dlg');
-function closeModal(){ modal.hidden=true; modal.removeAttribute('data-mode'); }
+function closeModal(){
+  /* ⚠ 一定要「先 blur、後 hidden」。如果反過來（先將祖先設 hidden 再 blur），
+     部分環境（包括 jsdom）嘅 blur() 會靜靜哋唔生效，focus 就永遠留喺嗰個
+     已經睇唔到嘅輸入框上；之後打字會被「打字中」保護規則擋住，令全域快捷鍵
+     （例如 ? / N / L / D）全部失效。 */
+  var ae=document.activeElement;
+  if(ae && ae!==document.body && modal.contains(ae)){ try{ ae.blur(); }catch(e){} }
+  modal.hidden=true; modal.removeAttribute('data-mode');
+}
 modal.addEventListener('click',function(e){ if(e.target===modal) closeModal(); });
-document.addEventListener('keydown',function(e){
-  if(e.key==='Escape'){ closeModal(); document.getElementById('mask').hidden=true; return; }
-  var typing=/^(INPUT|TEXTAREA)$/.test((document.activeElement||{}).tagName||'')||
-             (document.activeElement||{}).isContentEditable;
-  if(modal.hidden&&document.getElementById('mask').hidden&&!typing){
-    if(e.key==='ArrowLeft'){ document.getElementById('prev').click(); }
-    if(e.key==='ArrowRight'){ document.getElementById('next').click(); }
-    if(e.key==='t'||e.key==='T'){ document.getElementById('today').click(); }
+/* ---------- 全域鍵盤快捷鍵 ----------
+   規則：
+   1. 打字中（input / textarea / contenteditable）一律唔搶鍵，除咗 Escape。
+   2. 有彈窗／抽屜開住嗰陣，只准 Escape 同「?」，唔好偷偷轉頁。
+   3. 用 e.key 而唔係 keyCode；數字用 1–7 對應 VIEW_ORDER。
+   4. 有修飾鍵（Ctrl / Cmd / Alt）一律唔理，唔好搶瀏覽器嘅快捷鍵。 */
+var KEYMAP = [
+  ['1','週視圖','view:week'],
+  ['2','月總覽','view:month'],
+  ['3','待辦','view:todo'],
+  ['4','倒數','view:countdown'],
+  ['5','成績','view:grade'],
+  ['6','GPA','view:gpa'],
+  ['7','日記','view:diary'],
+  ['←','上一週','prev'],
+  ['→','下一週','next'],
+  ['T','回到本週','today'],
+  ['/','搜尋','search'],
+  ['N','新增項目','add'],
+  ['L','項目清單','list'],
+  ['D','切換深／淺色','theme'],
+  ['?','快捷鍵說明','help'],
+  ['Esc','關閉彈窗','close']
+];
+function anyModalOpen(){
+  var m=document.getElementById('modal'), k=document.getElementById('mask');
+  return (m && !m.hidden) || (k && !k.hidden);
+}
+function keyRun(act){
+  if(act.indexOf('view:')===0){ setView(act.slice(5)); return true; }
+  var el;
+  if(act==='prev'){ el=document.getElementById('prev'); }
+  else if(act==='next'){ el=document.getElementById('next'); }
+  else if(act==='today'){ el=document.getElementById('today'); }
+  else if(act==='search'){ searchForm(); return true; }
+  else if(act==='add'){ newChooser(); return true; }
+  else if(act==='list'){ drawList(); document.getElementById('mask').hidden=false; return true; }
+  else if(act==='theme'){
+    var cur=S.theme||'auto';
+    setTheme(cur==='dark'?'light':'dark'); return true;
   }
+  else if(act==='help'){ keyHelp(); return true; }
+  else if(act==='close'){ closeModal(); document.getElementById('mask').hidden=true; return true; }
+  if(el){ el.click(); return true; }
+  return false;
+}
+function keyHelp(){
+  dlg.innerHTML='<h3>鍵盤快捷鍵</h3><div class="bd">'+
+    '<div class="keytbl">'+
+      KEYMAP.map(function(k){
+        var keyHtml = k[0]==='←'?'←':k[0]==='→'?'→':k[0]==='Esc'?'Esc':k[0];
+        return '<div class="keyrow"><kbd>'+esc(keyHtml)+'</kbd><span>'+esc(k[1])+'</span></div>';
+      }).join('')+
+    '</div>'+
+    '<div class="bkinfo" style="margin-top:10px">'+
+      '打字中（例如改待辦內容、日記）快捷鍵會自動讓路，唔會打亂你輸入嘅字。<br>'+
+      '<b>←</b> 同 <b>→</b> 亦可以喺內容區<b>左右滑動</b>代替（可在設定閂掉）。'+
+    '</div>'+
+    '</div><div class="ft"><button class="btn pri" id="khClose">明白</button></div>';
+  modal.hidden=false;
+  document.getElementById('khClose').addEventListener('click',closeModal);
+}
+document.addEventListener('keydown',function(e){
+  /* Escape 任何時候都要可以閂窗 */
+  if(e.key==='Escape'){ closeModal(); document.getElementById('mask').hidden=true; return; }
+  /* 有修飾鍵就唔好搶（Ctrl+N、Cmd+L… 留返俾瀏覽器） */
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  var ae=document.activeElement||{};
+  var typing=/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName||'')||!!ae.isContentEditable;
+  if(typing){
+    /* 打字中：只留 Escape 同「?」；其餘一律唔理 */
+    if(e.key==='?' && !ae.isContentEditable){ /* 打字中就真係想打個問號 */ return; }
+    return;
+  }
+  if(anyModalOpen()){
+    /* 彈窗開住：只准「?」開說明，唔好偷偷轉頁 */
+    if(e.key==='?'){ e.preventDefault(); keyHelp(); }
+    return;
+  }
+  var map={'1':'view:week','2':'view:month','3':'view:todo','4':'view:countdown',
+           '5':'view:grade','6':'view:gpa','7':'view:diary',
+           'ArrowLeft':'prev','ArrowRight':'next','/':'search','?':'help',
+           'n':'add','N':'add','l':'list','L':'list','d':'theme','D':'theme'};
+  var act=null;
+  if(map[e.key]) act=map[e.key];
+  else if((e.key==='t'||e.key==='T')) act='today';
+  if(!act) return;
+  /* 用 ←/→ 嗰陣唔好連捲軸都郁 */
+  if(e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='/') e.preventDefault();
+  keyRun(act);
 });
 
 function openEvent(ds){
@@ -4726,7 +4993,7 @@ function openEvent(ds){
     });
     return;
   }
-  var p=PAL[e.color]||PAL.gray, dt=new Date(date+'T00:00:00');
+  var p=PAL[evColor(e)]||PAL.gray, dt=new Date(date+'T00:00:00');
   var h='<h3>'+esc(e.code)+(e.sec?' '+esc(e.sec):'')+
         (e.tag==='exam'?'　<span style="font-size:12px;color:#d93a3f">考試</span>':'')+
         (e.tag==='study'?'　<span style="font-size:12px;color:#0f766e">溫書</span>':'')+
@@ -4782,6 +5049,51 @@ function newChooser(){
   document.getElementById('cAct').addEventListener('click',function(){ closeModal(); actForm(todayStr()); });
   document.getElementById('cTerm').addEventListener('click',function(){ closeModal(); termForm(); });
   document.getElementById('cOnce').addEventListener('click',function(){ closeModal(); oneForm(null); });
+}
+
+/* ---------- 自訂科目外觀（顏色 + 圖示） ---------- */
+/* 只存「用戶改過嘅嘢」，冇改過嘅科目完全唔會入 subjectPref，
+   所以舊資料零影響，刪走一科嘅偏好亦唔會影響課表本身。 */
+var ICON_CHOICES = ['','📐','📊','💻','🧪','📖','✏️','🎨','🎵','🌏','⚖️','🧠','🔬','📝','🏛️','💡','🧮','🩺','🏗️','🗣️'];
+function prefKey(code){ return normCode(code); }
+function subjectPrefOf(code){
+  var k=prefKey(code), p=S.subjectPref ? S.subjectPref[k] : null;
+  return (p&&typeof p==='object') ? p : {};
+}
+/* 有效顏色：用戶自訂 > 課堂原本設定 > 預設
+   ⚠ fallback 本身都要驗證：課堂嘅 color 可能係 PAL 冇嘅名，
+     唔驗證就會令呼叫方 PAL[evColor(e)] 拎到 undefined 而爆。 */
+function effColor(code, fallback){
+  var p=subjectPrefOf(code);
+  if(p.color && PAL[p.color]) return p.color;
+  if(fallback && PAL[fallback]) return fallback;
+  return 'blue';
+}
+function effIcon(code){
+  var p=subjectPrefOf(code);
+  return (typeof p.icon==='string') ? p.icon : '';
+}
+function setSubjectPref(code, patch){
+  var k=prefKey(code); if(!k) return;
+  if(!S.subjectPref || typeof S.subjectPref!=='object') S.subjectPref={};
+  var cur=subjectPrefOf(code), next=Object.assign({},cur,patch);
+  /* 清走空值，唔好留垃圾 */
+  if(!next.color) delete next.color;
+  if(!next.icon) delete next.icon;
+  if(!Object.keys(next).length) delete S.subjectPref[k];
+  else S.subjectPref[k]=next;
+}
+/* 圖示 chip：有圖示就喺代號前面加一個 span */
+function iconHtml(code){
+  var ic=effIcon(code);
+  return ic ? '<i class="subjic">'+esc(ic)+'</i>' : '';
+}
+/* 用邊個 code 去查偏好？事件有 code，課堂有 code，兩者一樣 */
+function evColor(e){
+  if(!e) return 'blue';
+  if(e.kind==='session') return e.color||'teal';
+  if(e.kind==='act') return e.color||'gray';
+  return effColor(e.code, e.color);
 }
 
 function swatchHtml(sel){
@@ -5208,6 +5520,7 @@ document.getElementById('btnAdd').addEventListener('click',newChooser);
 document.getElementById('btnTimer').addEventListener('click',timerForm);
 document.getElementById('btnList').addEventListener('click',function(){
   drawList(); document.getElementById('mask').hidden=false; });
+document.getElementById('btnFind').addEventListener('click',searchForm);
 document.getElementById('closeDrawer').addEventListener('click',function(){
   document.getElementById('mask').hidden=true; });
 document.getElementById('mask').addEventListener('click',function(e){
@@ -5400,7 +5713,18 @@ ttl.addEventListener('blur',function(){
 var GRADES = ['A+','A','A-','B+','B','B-','C+','C','C-','D','F'];
 
 function subjColor(code){
-  for(var i=0;i<S.courses.length;i++) if(S.courses[i].code===code) return S.courses[i].color;
+  var pf=subjectPrefOf(code);
+  if(pf.color&&PAL[pf.color]) return pf.color;
+  for(var i=0;i<S.courses.length;i++){
+    /* ⚠ 一定要驗證課堂自己嘅 color 係唔係合法色名：
+       舊資料／手改過嘅備份／外來種子都可能寫咗 PAL 冇嘅色（例如 'rose'），
+       唔驗證就會令 PAL[color].bd 爆 TypeError，連累成個設定頁畫唔出。 */
+    if(S.courses[i].code===code){
+      var c=S.courses[i].color;
+      if(c&&PAL[c]) return c;
+      break;
+    }
+  }
   return 'gray';
 }
 
@@ -5686,6 +6010,511 @@ function lastBackupText(){
   return d.getFullYear()+'/'+p2(d.getMonth()+1)+'/'+p2(d.getDate())+' '+
          p2(d.getHours())+':'+p2(d.getMinutes());
 }
+/* ================= 全域搜尋 =================
+   一個輸入框搵晒：課堂／科目、待辦、倒數、成績、GPA、日記（連內文同歌）、
+   單次活動、溫書記錄。每筆結果都帶「跳去邊一頁＋要唔要打開佢」嘅指示，
+   撳一下就飛去啱嘅位置，唔使自己去搵。
+
+   唔用 S 以外嘅狀態，所以搜尋本身係純讀取，唔會改任何嘢。 */
+var SEARCH_MIN = 1;          /* 一個字就開始搵（中文一個字已經有意義） */
+
+function searchHay(){
+  /* 預先砌一次可搜尋索引唔划算（資料量細，即場砌就得），
+     但關鍵詞比對要「唔理大小寫同空白」——同 normCode 一致。 */
+  return function(s){ return String(s==null?'':s).toLowerCase().replace(/\s+/g,''); };
+}
+/* 高亮：把 query 嘅每一段（以空白分）用 <mark> 包住。已經 escape 過嘅字串先入。 */
+function hl(escaped, terms){
+  var out=escaped;
+  terms.forEach(function(t){
+    if(!t) return;
+    /* 因為已經 escape，所以要搵嘅字都要 escape 一次先對得上（& < > 例外：query 好少用） */
+    var re=new RegExp('('+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+    out=out.replace(re,'<mark>$1</mark>');
+  });
+  return out;
+}
+function searchAll(q){
+  var raw=String(q||'').trim();
+  if(raw.length<SEARCH_MIN) return [];
+  var terms=raw.toLowerCase().split(/\s+/).filter(Boolean);
+  var flat=searchHay();
+  var hits=[];
+  function add(o){
+    /* 所有 terms 都要出現（AND），符合「越打越窄」嘅直覺 */
+    var hay=flat(o._t||'');
+    for(var i=0;i<terms.length;i++) if(hay.indexOf(flat(terms[i]))<0) return;
+    delete o._t;
+    hits.push(o);
+  }
+
+  /* 1) 課堂／科目：由課程本身（唔係逐日事件）出發，一個人只出一條 */
+  var seenCode={};
+  (S.courses||[]).forEach(function(c){
+    if(!c.code) return;
+    var k=normCode(c.code)+'|'+(c.sec||'');
+    if(seenCode[k]) return; seenCode[k]=1;
+    add({ kind:'course', id:c.id, title:(c.code||'')+(c.sec?' '+c.sec:''),
+          sub:[TAGS[c.tag||'class']||'課堂', DOW[(+c.day||1)-1], (c.start||'')+'–'+(c.end||''),
+               c.room||''].filter(Boolean).join('　·　'),
+          _t:[c.code,c.sec,c.room,TAGS[c.tag||'class']].filter(Boolean).join(' '),
+          go:{ view:'week' } });
+  });
+  /* 2) 單次活動 */
+  (S.oneOff||[]).forEach(function(o){
+    add({ kind:'oneoff', id:o.id, title:(o.code||'單次活動')+(o.sec?' '+o.sec:''),
+          sub:ds2cn(o.date)+'　·　'+(o.start||'')+'–'+(o.end||'')+(o.room?('　·　'+o.room):''),
+          _t:[o.code,o.sec,o.room,TAGS[o.tag]||''].filter(Boolean).join(' '),
+          go:{ view:'week', date:o.date } });
+  });
+  /* 3) 待辦 */
+  (S.todos||[]).forEach(function(t){
+    var cd=t.done?'已完成':(t.due?(cdDayDiff(t.due)<0?'已逾期':(cdDayDiff(t.due)===0?'今日到期':(t.due+' 到期'))):'冇截止日');
+    add({ kind:'todo', id:t.id, title:t.text||'（無內容）', sub:'待辦　·　'+cd,
+          _t:[t.text,t.due].filter(Boolean).join(' '),
+          go:{ view:'todo' } });
+  });
+  /* 4) 倒數項目 */
+  (S.deadlines||[]).forEach(function(d){
+    add({ kind:'deadline', id:d.id, title:d.name||'倒數項目',
+          sub:'倒數　·　'+ds2cn(d.date)+(d.tag?('　·　'+d.tag):'')+(d.note?('　·　'+d.note):''),
+          _t:[d.name,d.tag,d.note,d.date].filter(Boolean).join(' '),
+          go:{ view:'countdown' } });
+  });
+  /* 5) 成績目標 */
+  Object.keys(S.grades||{}).forEach(function(code){
+    var g=S.grades[code]; if(!g||typeof g!=='object') return;
+    if(!g.target) return;
+    add({ kind:'grade', id:code, title:code, sub:'成績目標　·　'+g.target,
+          _t:code+' '+g.target, go:{ view:'grade' } });
+  });
+  /* 6) GPA 課程 */
+  (S.gpa||[]).forEach(function(r){
+    add({ kind:'gpa', id:r.id, title:r.code||'（無代號）',
+          sub:'GPA　·　'+(r.grade||'未有成績')+'　·　'+(r.credits||'?')+' 學分',
+          _t:[r.code,r.grade,r.credits].filter(Boolean).join(' '), go:{ view:'gpa' } });
+  });
+  /* 7) 日記：內文、心情、歌名、歌手 */
+  (S.diary||[]).forEach(function(d){
+    var note=String(d.note||'').trim();
+    var songTitle = d.song ? String((d.song.meta&&d.song.meta.title)||d.song.label||'').trim() : '';
+    var songArt = d.song ? songArtist(d.song) : '';
+    var ph=(d.photos||[]).length;
+    if(!note && !songTitle && !ph && !(d.mood>=1)) return;
+    var subBits=['日記', ds2cn(d.date)];
+    if(d.mood>=1) subBits.push('心情 '+'😞😕😐🙂😄'.slice((d.mood-1),1));
+    if(ph) subBits.push(ph+' 張相');
+    if(songTitle) subBits.push('🎵 '+songTitle+(songArt?(' — '+songArt):''));
+    add({ kind:'diary', id:d.id, title:note?note.split('\n')[0].slice(0,60):(songTitle||'（只有相片）'),
+          sub:subBits.join('　·　'), _note:note,
+          _t:[note,songTitle,songArt,d.date].filter(Boolean).join(' '),
+          go:{ view:'diary', date:d.date } });
+  });
+  /* 8) 溫書記錄（有科目嘅先值得搜） */
+  (S.studySessions||[]).forEach(function(x){
+    if(!x.subj) return;
+    add({ kind:'session', id:x.id, title:'溫書：'+x.subj,
+          sub:'溫書記錄　·　'+ds2cn(x.d)+'　·　'+x.s+'–'+x.e+'　·　'+hTxt(x.m)+' 小時',
+          _t:[x.subj,x.d].filter(Boolean).join(' '), go:{ view:'week', date:x.d } });
+  });
+
+  /* 排序：完全符合標題 > 標題開頭 > 標題包含 > 其他；同分時按類型固定次序 */
+  var order={course:0,oneoff:1,todo:2,deadline:3,grade:4,gpa:5,diary:6,session:7};
+  var t0=flat(raw);
+  function score(h){
+    var t=flat(h.title);
+    if(t===t0) return 0;
+    if(t.indexOf(t0)===0) return 1;
+    if(t.indexOf(t0)>=0) return 2;
+    return 3;
+  }
+  hits.forEach(function(h){ h._s=score(h); });
+  hits.sort(function(a,b){
+    return a._s-b._s || (order[a.kind]-order[b.kind]) || 0;
+  });
+  return hits;
+}
+/* 跳去結果：先切換檢視，再（如果有）打開嗰一筆 */
+function searchGo(h){
+  if(!h||!h.go) return;
+  closeModal();
+  var g=h.go;
+  if(g.view) setView(g.view);
+  var t=g.date || (h.kind==='oneoff'?null:null);
+  if(t){
+    /* 跳到嗰一日：用日期切學期週次，再 highlight 條柱 */
+    var dt=new Date(t+'T00:00:00');
+    if(!isNaN(dt.getTime())){
+      S.weekIdx=Math.max(0,Math.min(WEEKS-1,Math.round((mon(dt)-TERM)/(7*864e5))));
+      save(); refreshAll();
+      setTimeout(function(){
+        var col=document.querySelector('.col[data-date="'+t+'"]');
+        if(col){ col.classList.add('flashday'); setTimeout(function(){ col.classList.remove('flashday'); },2000); }
+      },60);
+    }
+    return;
+  }
+  /* 冇日期：留喺嗰一頁，把對應嗰一筆圈一下 */
+  setTimeout(function(){
+    var sel = h.kind==='todo' ? '#todoBody .tdrow[data-id="'+h.id+'"]'
+            : h.kind==='course' ? null : null;
+    if(sel){
+      var el=document.querySelector(sel);
+      if(el){ el.scrollIntoView({block:'center',behavior:'smooth'});
+              el.classList.add('flashrow'); setTimeout(function(){ el.classList.remove('flashrow'); },2000); }
+    }
+  },60);
+}
+function searchForm(){
+  dlg.innerHTML='<h3>搜尋</h3><div class="bd">'+
+    '<input type="search" id="sq" class="sqinput" placeholder="打科目、待辦、日記內容、歌名…" '+
+      'autocomplete="off" spellcheck="false">'+
+    '<div class="sqhint" id="sqHint">打一個字就開始搵</div>'+
+    '<div class="sqlist" id="sqList"></div>'+
+    '</div><div class="ft"><button class="btn" id="sqClose">關閉</button></div>';
+  modal.hidden=false;
+  document.getElementById('sqClose').addEventListener('click',closeModal);
+  var inp=document.getElementById('sq');
+  var list=document.getElementById('sqList');
+  var hint=document.getElementById('sqHint');
+  var cur=[];
+  function draw(){
+    var q=inp.value.trim();
+    if(!q){ list.innerHTML=''; hint.textContent='打一個字就開始搵'; return; }
+    cur=searchAll(q);
+    if(!cur.length){
+      list.innerHTML='<div class="sqempty">搵唔到「'+esc(q)+'」</div>';
+      hint.textContent='冇結果'; return;
+    }
+    var terms=q.toLowerCase().split(/\s+/).filter(Boolean).map(function(t){
+      return t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    });
+    hint.textContent=cur.length+' 個結果'+(cur.length>=60?'（只顯示頭 60 個）':'');
+    var h='';
+    cur.slice(0,60).forEach(function(x,i){
+      var badge={course:'課',oneoff:'活',todo:'待',deadline:'數',grade:'績',
+                 gpa:'G',diary:'日',session:'溫'}[x.kind]||'·';
+      h+='<button class="sqrow" data-i="'+i+'">'+
+           '<span class="sqb sqb-'+x.kind+'">'+badge+'</span>'+
+           '<span class="sqm"><b>'+hl(esc(x.title),terms)+'</b>'+
+           '<span>'+hl(esc(x.sub||''),terms)+'</span></span>'+
+           '<span class="sqgo">›</span></button>';
+    });
+    list.innerHTML=h;
+  }
+  inp.addEventListener('input',draw);
+  list.addEventListener('click',function(e){
+    var b=e.target.closest('.sqrow'); if(!b) return;
+    var x=cur[+b.dataset.i]; if(x) searchGo(x);
+  });
+  inp.addEventListener('keydown',function(e){
+    /* ⚠ 唔可以用 stopPropagation 一刀切：咁會連 Escape 都擋住，
+       令個搜尋框閂唔到。只擋「會觸發全域快捷鍵」嗰啲字。 */
+    if(e.key==='Enter'){ if(cur.length) searchGo(cur[0]); e.stopPropagation(); }
+  });
+  inp.focus();
+}
+
+/* ================= 匯出 iCalendar（.ics） =================
+   為咩要 .ics：純前端 PWA 冇得做真系統通知，但匯出一個標準日曆檔
+   再 import 落手機／iPad／Google 日曆，之後**系統自己彈提示**——
+   呢個係唯一可以喺唔裝 App 嘅前提下攞到真提醒嘅方法。
+
+   特別注意幾個 iCalendar 嘅硬規矩（錯咗會靜靜哋 import 唔到）：
+   1. 行尾一定要 CRLF。
+   2. 每行唔可以超過 75 個 octet；長過就要折行，續行開頭要有一個空格。
+      ——而且要用 UTF-8 位元組數去數，唔係字元數（中文一個字 3 bytes）。
+   3. 文字值入面嘅 \ ; , 同換行要 escape 成 \\ \; \, \n。
+   4. 本地時間要寫成 floating time（YYYYMMDDTHHMMSS，唔加 Z），
+      咁匯入嗰部機先會照佢自己嘅時區顯示，唔會飄。 */
+
+/* UTF-8 位元組長度 */
+function utf8Len(s){
+  var n=0;
+  for(var i=0;i<s.length;i++){
+    var c=s.charCodeAt(i);
+    if(c<0x80) n+=1;
+    else if(c<0x800) n+=2;
+    else if(c>=0xD800&&c<=0xDBFF){ n+=4; i++; }   /* 代理對：4 bytes 一個 emoji */
+    else n+=3;
+  }
+  return n;
+}
+/* RFC 5545 §3.1 折行：每條實體行唔可以超過 75 octets，續行以單一空格開頭。
+   ⚠ 個空格本身都佔 1 octet，所以「內容」每行最多只可以放 75（第一行）／74（續行）。
+   ⚠ 一定要逐個 code point 處理：如果當 UTF-16 code unit 逐個字切，
+     一個 emoji（📐 = 兩個 code unit、4 octets）就會被切開，
+     寫落檔就會變成兩個殘缺嘅 UTF-8 序列 —— 而 round-trip 測試仲會照過，
+     因為拼返埋係一樣字串。呢個 bug 只有逐段驗位元組邊界先捉得到。 */
+function icsFold(line){
+  var out=[], cur='', curLen=0, i=0;
+  function push(){
+    out.push((out.length?' ':'')+cur);
+    cur=''; curLen=0;
+  }
+  while(i<line.length){
+    var cp=line.codePointAt(i);
+    var ch=String.fromCodePoint(cp);
+    i += (cp>0xFFFF ? 2 : 1);
+    var L=utf8Len(ch);
+    var cap = out.length ? 74 : 75;
+    if(curLen+L>cap && cur!=='') push();
+    cur+=ch; curLen+=L;
+  }
+  if(cur!==''||!out.length) push();
+  return out.join('\r\n');
+}
+/* 文字值 escape */
+function icsEsc(s){
+  return String(s==null?'':s)
+    .replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,')
+    .replace(/\r\n|\r|\n/g,'\\n');
+}
+/* 內容行：NAME;PARAM=..:VALUE 都要折行 */
+function icsLine(name, params, value){
+  var k=name;
+  if(params) k+=';'+params;
+  return icsFold(k+':'+value);
+}
+/* 'YYYY-MM-DD' + 'HH:MM' → 'YYYYMMDDTHHMMSS'（floating time） */
+function icsStamp(ds, hm, addMin){
+  var d=new Date(ds+'T'+((hm&&/^\d{2}:\d{2}$/.test(hm))?hm:'00:00')+':00');
+  if(isNaN(d.getTime())) return '';
+  if(addMin) d=new Date(d.getTime()+addMin*60000);
+  return ''+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+'T'+
+         p2(d.getHours())+p2(d.getMinutes())+'00';
+}
+function icsDateOnly(ds){ return String(ds||'').replace(/-/g,''); }
+function icsNowStamp(){
+  var d=new Date();
+  return d.getUTCFullYear()+p2(d.getUTCMonth()+1)+p2(d.getUTCDate())+'T'+
+         p2(d.getUTCHours())+p2(d.getUTCMinutes())+p2(d.getUTCSeconds())+'Z';
+}
+/* 一個 VEVENT */
+function icsEvent(o){
+  var L=[];
+  L.push('BEGIN:VEVENT');
+  L.push(icsLine('UID',null,o.uid+'@timetable-pwa'));
+  L.push(icsLine('DTSTAMP',null,icsNowStamp()));
+  if(o.allday){
+    /* 全日事件：DTEND 係「不含」嘅，所以要 +1 日 */
+    L.push(icsLine('DTSTART','VALUE=DATE',icsDateOnly(o.date)));
+    var e=new Date(o.date+'T00:00:00');
+    if(!isNaN(e.getTime())){
+      e=addD(e,1);
+      L.push(icsLine('DTEND','VALUE=DATE',icsDateOnly(ymd(e))));
+    }
+  }else{
+    var s=icsStamp(o.date,o.start,0), en=icsStamp(o.date,o.start,o.mins||60);
+    if(!s||!en) return '';
+    L.push(icsLine('DTSTART',null,s));
+    L.push(icsLine('DTEND',null,en));
+  }
+  L.push(icsLine('SUMMARY',null,icsEsc(o.summary||'')));
+  if(o.desc)  L.push(icsLine('DESCRIPTION',null,icsEsc(o.desc)));
+  if(o.loc)   L.push(icsLine('LOCATION',null,icsEsc(o.loc)));
+  if(o.cat)   L.push(icsLine('CATEGORIES',null,icsEsc(o.cat)));
+  if(o.alarm) L.push(icsFold('BEGIN:VALARM'), icsFold('TRIGGER:-PT'+o.alarm+'M'),
+                      icsFold('ACTION:DISPLAY'),
+                      icsLine('DESCRIPTION',null,icsEsc(o.summary||'')), icsFold('END:VALARM'));
+  if(o.rrule) L.push(icsLine('RRULE',null,o.rrule));
+  if(o.exdate) o.exdate.forEach(function(d){ L.push(icsLine('EXDATE','VALUE=DATE',icsDateOnly(d))); });
+  L.push('END:VEVENT');
+  return L.join('\r\n');
+}
+/* 產生整份 .ics。opts: {course,oneoff,todo,deadline,study,alarm} */
+function buildIcs(opts){
+  opts = opts || {};
+  var want=function(k){ return opts[k]!==false; };   /* 預設全開 */
+  var R=termRange();
+  var from = (R&&R.from) || todayStr();
+  var until = (R&&R.until) || ymd(addD(new Date(),120));
+  var evs=[], skipped=0;
+  var alarmMin = (typeof opts.alarmMin==='number') ? opts.alarmMin : 10;
+
+  function room(c){ return c.room ? String(c.room) : ''; }
+  function secTxt(c){ return c.sec ? String(c.sec) : ''; }
+
+  /* 1) 固定課堂：用 RRULE 每個星期重複，比逐日展開細好多，改嘅時候亦只需改一條 */
+  if(want('course')){
+    var tid=activeTermId();
+    (S.courses||[]).forEach(function(c){
+      if(+c.day<1||+c.day>7) return;
+      if(c.tag!=='class' && c.tag!=='study' && c.tag!=='exam') return;
+      if(c.term && tid && c.term!==tid) return;
+      if(!c.start||!c.end) return;
+      var a=s2m(c.start), b=s2m(c.end);
+      if(b<=a) return;
+      /* 由課堂生效日起，第一個同 c.day 相同嘅日子，就係 RRULE 嘅起點 */
+      var cd=c.from||from;
+      var d0=new Date(cd+'T00:00:00');
+      if(isNaN(d0.getTime())) return;
+      var shift=(+c.day - dow1(d0) + 7)%7;
+      d0=addD(d0,shift);
+      var ds0=ymd(d0);
+      /* 課程已經過咗期、或者仲未生效，就唔匯出 */
+      var endUntil = c.until || until;
+      if(ds0>endUntil) { skipped++; return; }
+      var wk = (c.tag==='exam') ? 'WKST=MO'
+             : ('INTERVAL=1');
+      var ex=[];
+      /* 例外：跳過嘅日子 → EXDATE；改咗時間嘅日子 → 另外開一個獨立事件 */
+      var exd=S.exceptions||{};
+      Object.keys(exd).forEach(function(ds){
+        var x=exd[ds]||{};
+        if(x.skip && String(x.skip).indexOf(c.id)>=0){ ex.push(ds); return; }
+        var m=x.mod && x.mod[c.id];
+        if(!m) return;
+        ex.push(ds);
+        var st=m.start||c.start, en=m.end||c.end;
+        if(!st||!en) return;
+        var ma=s2m(st), mb=s2m(en);
+        if(mb<=ma) return;
+        var mx=(m.code||c.code||''), msec=(m.sec!=null?m.sec:c.sec);
+        evs.push({ uid:'mv-'+c.id+'-'+ds, date:ds, start:st, mins:mb-ma,
+                   summary:mx+(msec?(' '+msec):''),
+                   desc:[TAGS[c.tag]||'課堂','（改時間：原定 '+c.start+'–'+c.end+'）'].join('\n'),
+                   loc:room(m)||room(c), cat:'時間表', alarm:alarmMin });
+      });
+      var rr='FREQ=WEEKLY;'+wk+';UNTIL='+icsDateOnly(endUntil)+'T235900';
+      evs.push({
+        uid:'c-'+c.id, date:ds0, start:c.start, mins:b-a,
+        summary:(c.code||'')+(secTxt(c)?' '+secTxt(c):''),
+        desc:[TAGS[c.tag]||'課堂', c.tag==='study'?'（溫書時段）':''].filter(Boolean).join('\n'),
+        loc:room(c), cat:'時間表', alarm:alarmMin, rrule:rr, exdate:ex
+      });
+    });
+  }
+
+  /* 2) 單次活動：唔使 RRULE，直接一日一條 */
+  if(want('oneoff')){
+    (S.oneOff||[]).forEach(function(o){
+      if(!o.date) return;
+      if(R && (o.date<R.from || o.date>R.until)) { skipped++; return; }
+      var a=s2m(o.start), b=s2m(o.end);
+      if(!(b>a)) { skipped++; return; }
+      evs.push({ uid:'o-'+o.id, date:o.date, start:o.start, mins:b-a,
+                 summary:(o.code||'')+(o.sec?' '+o.sec:''),
+                 desc:(TAGS[o.tag]||'單次活動'), loc:room(o),
+                 cat:'時間表', alarm:alarmMin });
+    });
+  }
+
+  /* 3) 功課／待辦截止日：全日事件，而且提前一日再響一次，唔會臨尾先知 */
+  if(want('todo')){
+    (S.todos||[]).forEach(function(t){
+      if(!t.due||t.done) return;
+      evs.push({ uid:'t-'+t.id, date:t.due, allday:true,
+                 summary:'截止：'+(t.text||'待辦'),
+                 desc:'由時間表 App 匯出嘅待辦事項。',
+                 cat:'功課', alarm:alarmMin });
+      /* 提前一日嘅預告：只得當日截止就冇意思 */
+      var dprev=ymd(addD(new Date(t.due+'T00:00:00'),-1));
+      if(!isNaN(new Date(dprev+'T00:00:00').getTime()))
+        evs.push({ uid:'t1-'+t.id, date:dprev, allday:true,
+                   summary:'聽日截止：'+(t.text||'待辦'),
+                   desc:'由時間表 App 匯出嘅提醒。', cat:'功課', alarm:alarmMin });
+    });
+  }
+
+  /* 4) 倒數項目（考試、交論文、旅行…） */
+  if(want('deadline')){
+    (S.deadlines||[]).forEach(function(d){
+      if(!d.date) return;
+      var hasTime=/^\d{2}:\d{2}$/.test(d.time||'');
+      evs.push({ uid:'d-'+d.id, date:d.date,
+                 allday:!hasTime, start:hasTime?d.time:'00:00', mins:60,
+                 summary:(d.name||'倒數項目')+(d.tag?('　['+d.tag+']'):''),
+                 desc:d.note||'', cat:'倒數', alarm:hasTime?alarmMin:0 });
+    });
+  }
+
+  /* 5) 溫書記錄：只匯出「實際溫過」嘅時段（計時記錄），當成歷史事件 */
+  if(want('study')){
+    (S.studySessions||[]).forEach(function(x){
+      if(!x.d||!x.s||!x.e) return;
+      var a=s2m(x.s), b=s2m(x.e);
+      if(!(b>a)) b=a+Math.max(1,x.m||0);
+      evs.push({ uid:'s-'+x.id, date:x.d, start:x.s, mins:Math.max(1,b-a),
+                 summary:'溫書'+(x.subj?('：'+x.subj):''),
+                 desc:'實際溫書 '+hTxt(x.m)+' 小時（由計時器記錄）。',
+                 cat:'溫書', alarm:0 });
+    });
+  }
+
+  /* 砌檔：一定要有 VERSION + PRODID + CALSCALE */
+  var out=[];
+  out.push('BEGIN:VCALENDAR');
+  out.push('VERSION:2.0');
+  out.push('PRODID:-//時間表 App//2026f//ZH-HK');
+  out.push('CALSCALE:GREGORIAN');
+  out.push('METHOD:PUBLISH');
+  out.push(icsLine('X-WR-CALNAME',null,icsEsc(S.title||'時間表')));
+  if(R) out.push(icsLine('X-WR-CALDESC',null,
+    icsEsc((termName()||'')+'　'+R.from+' 至 '+R.until)));
+  /* 摺行時要逐條 event 已經摺好，所以要 split 返做行再駁 */
+  evs.forEach(function(e){
+    var s=icsEvent(e);
+    if(s) out.push(s);
+  });
+  out.push('END:VCALENDAR');
+  return { text:out.join('\r\n')+'\r\n', count:evs.length, skipped:skipped,
+           from:from, until:until };
+}
+/* 設定頁勾咗邊幾項 */
+function collectIcs(){
+  var o={alarmMin:ICS_ALARM};
+  [['icsCourse','course'],['icsOne','oneoff'],['icsTodo','todo'],
+   ['icsDead','deadline'],['icsStudy','study']].forEach(function(p){
+    var el=document.getElementById(p[0]);
+    o[p[1]] = el ? !!el.checked : true;
+  });
+  var al=document.getElementById('icsAlarm');
+  if(al){ var v=parseInt(al.value,10); o.alarmMin=(isFinite(v)&&v>0)?Math.min(120,v):0; ICS_ALARM=o.alarmMin; }
+  return o;
+}
+function doIcs(){
+  var opts=collectIcs();
+  var r=buildIcs(opts);
+  if(!r.count){ alert('冇嘢可以匯出。加返啲課堂、待辦或者倒數項目先。'); return; }
+  try{
+    var blob=new Blob([r.text],{type:'text/calendar;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download='時間表-'+(termName()||'calendar')+'.ics';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} },5000);
+    ICS_LAST=r;
+    var box=document.getElementById('icsResult');
+    if(box) box.innerHTML='<b>已匯出 '+r.count+' 個項目</b>'+
+      '（'+r.from+' 至 '+r.until+'）'+(r.skipped?('　·　略過 '+r.skipped+' 項學期外資料'):'')+
+      '<br>下一步：<b>打開啱啱下載嘅 .ics 檔</b>，系統日曆就會問你加唔加入。'+
+      '<br>iOS／iPadOS：用 Safari 下載後，「檔案」App 撳一下個 .ics 就會彈出加入日曆。'+
+      '<br>Google 日曆：設定 → 匯入 → 揀返個檔。<b>提醒會由系統自己發</b>，唔靠 App 開住。';
+  }catch(e){
+    alert('匯出失敗：'+e.message+'\n可以試下用「複製 .ics 文字」再自己貼落檔案。');
+  }
+}
+/* 冇得下載檔嘅環境（例如某些 in-app 瀏覽器）：退而求其次，複製文字 */
+function doIcsCopy(){
+  var r=buildIcs({});
+  if(!r.count){ alert('冇嘢可以匯出。'); return; }
+  var box=document.getElementById('icsResult');
+  function done(ok){
+    if(box) box.innerHTML = ok
+      ? ('<b>已複製 '+r.count+' 條日曆記錄（'+r.text.length.toLocaleString()+' 字元）</b>'+
+         '<br>貼落一個新檔，存成 <b>時間表.ics</b>（記住要 UTF-8 編碼），再打開佢。')
+      : ('<b>複製唔到</b>，請長按下面個框全選再複製。<br>'+
+         '<textarea class="icsta" rows="6" readonly>'+esc(r.text.slice(0,4000))+'</textarea>');
+  }
+  try{
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(r.text).then(function(){ done(true); },
+        function(){ done(false); });
+    } else done(false);
+  }catch(e){ done(false); }
+}
+
 function doExport(){
   var btn=document.getElementById('bkExport');
   if(btn){ btn.disabled=true; btn.textContent='打包中…'; }
@@ -6087,6 +6916,106 @@ function afterImport(){
   try{ closeModal(); }catch(e){}
   boot();
 }
+/* ---------- 設定頁：科目顏色／圖示 ---------- */
+/* 只列出真正嘅科目（唔包括溫書時段、計時記錄），同「目標成績」用同一套準則 */
+function subjPrefHtml(){
+  var subs=allSubjects();
+  if(!subs.length) return '<div class="bkinfo" style="margin-top:8px">'+
+    '仲未有科目。加咗課堂或者成績之後，呢度就會出現列表。</div>';
+  var h='<div class="spgrid">';
+  subs.forEach(function(code){
+    var cur=subjectPrefOf(code);
+    var eff=effColor(code, subjColor(code));   /* 一定係 PAL 有效色名 */
+    var colName = (cur.color && PAL[cur.color]) ? PAL[cur.color].name : '跟課堂';
+    var ic = cur.icon || '';
+    h+='<div class="sprow" data-code="'+esc(code)+'">'+
+         '<span class="spdot" style="background:'+PAL[eff].bd+'">'+
+           (ic?'<i class="subjic">'+esc(ic)+'</i>':'')+'</span>'+
+         '<span class="spname">'+esc(code)+'</span>'+
+         '<span class="spmeta">'+esc(colName)+'</span>'+
+         '<button class="sbtn" data-act="edit">改</button>'+
+         (cur.color||cur.icon ? '<button class="sbtn ghost" data-act="reset">還原</button>' : '')+
+       '</div>';
+  });
+  return h+'</div>';
+}
+function openSubjPref(code){
+  var cur=subjectPrefOf(code);
+  /* ⚠ openSubjPref 會佔用同一個 #modal 嚟畫自己嘅內容，
+     所以「完成／清除」返去嗰陣，一定要**重新砌返設定頁**，
+     否則 #setBody 已經冇咗，drawSettings() 會靜靜哋 return，
+     成個設定頁就變空白。 */
+  function backToSettings(){ settingsForm(); }
+  dlg.innerHTML='<h3>科目外觀　<span style="font-size:12.5px;color:#7b8699">'+esc(code)+'</span></h3>'+
+    '<div class="bd">'+
+      '<div class="fld"><label>顏色</label>'+
+        '<div class="subssws" id="spSw">'+
+          '<button type="button" data-c="" class="'+(cur.color?'':'on')+'" '+
+            'style="background:var(--bg2)">跟課堂</button>'+
+          Object.keys(PAL).map(function(k){
+            return '<button type="button" data-c="'+k+'" class="'+((cur.color===k)?'on':'')+'" '+
+              'style="background:'+PAL[k].bg+';border-color:'+PAL[k].bd+'" title="'+PAL[k].name+'"></button>';
+          }).join('')+
+        '</div></div>'+
+      '<div class="fld"><label>圖示</label>'+
+        '<div class="spicons" id="spIc">'+
+          ICON_CHOICES.map(function(ic){
+            return '<button type="button" data-i="'+esc(ic)+'" class="'+((cur.icon||'')===ic?'on':'')+'">'+
+              (ic?esc(ic):'無')+'</button>';
+          }).join('')+
+        '</div>'+
+        '<div class="bkinfo" style="margin-top:8px">或者自己打一個（最多 4 個字元）：'+
+        '<input type="text" id="spIcCustom" class="spinput" maxlength="4" '+
+          'placeholder="例：📐" value="'+esc(cur.icon||'')+'"></div></div>'+
+      '<div class="bkinfo">圖示會喺<b>週視圖格仔、月總覽 chip、項目清單</b>嘅代號前面出現。'+
+      '清空就等於唔要圖示。</div>'+
+    '</div>'+
+    '<div class="ft">'+
+      '<button class="btn" id="spClear">清除</button>'+
+      '<button class="btn pri" id="spDone">完成</button>'+
+    '</div>';
+  modal.hidden=false;
+  var chosen={color:cur.color||'', icon:cur.icon||''};
+  function commit(){
+    setSubjectPref(code, {color:chosen.color, icon:chosen.icon});
+    save();
+  }
+  var sw=document.getElementById('spSw');
+  sw.addEventListener('click',function(e){
+    var b=e.target.closest('button[data-c]'); if(!b) return;
+    chosen.color=b.dataset.c;
+    Array.prototype.forEach.call(sw.querySelectorAll('button'),function(x){
+      x.classList.toggle('on', x.dataset.c===chosen.color);
+    });
+    commit();
+  });
+  var ic=document.getElementById('spIc');
+  ic.addEventListener('click',function(e){
+    var b=e.target.closest('button[data-i]'); if(!b) return;
+    chosen.icon=b.dataset.i;
+    var cu=document.getElementById('spIcCustom'); if(cu) cu.value=chosen.icon;
+    Array.prototype.forEach.call(ic.querySelectorAll('button'),function(x){
+      x.classList.toggle('on', x.dataset.i===chosen.icon);
+    });
+    commit();
+  });
+  var cu=document.getElementById('spIcCustom');
+  if(cu) cu.addEventListener('input',function(){
+    chosen.icon=this.value.trim().slice(0,4);
+    Array.prototype.forEach.call(ic.querySelectorAll('button'),function(x){
+      x.classList.toggle('on', x.dataset.i===chosen.icon);
+    });
+    commit();
+  });
+  document.getElementById('spClear').addEventListener('click',function(){
+    setSubjectPref(code,{color:'',icon:''}); save();
+    backToSettings();
+  });
+  document.getElementById('spDone').addEventListener('click',function(){
+    backToSettings();
+  });
+}
+
 function drawSettings(){
   var box=document.getElementById('setBody'); if(!box) return;
   var t=S.theme||'auto', s=backupStats();
@@ -6173,6 +7102,39 @@ function drawSettings(){
          '一開始就要決定用邊個，唔好兩邊都入資料。<br>'+
          '• 換機、清瀏覽器資料、重裝之前，記得先匯出備份。</div>'+
      '</div></details></div>';
+  h+='<div class="fld"><label>科目顏色同圖示</label>'+
+     '<div class="bkinfo" style="margin-top:2px">喺呢度改過嘅科目，'+
+     '<b>週視圖、月總覽、項目清單全部跟住變</b>，唔使逐個課堂改。'+
+     '冇改過嘅科目照用返課堂本身嘅顏色。</div>'+
+     '<div class="subjpref" id="subjPrefBox">'+subjPrefHtml()+'</div></div>';
+  h+='<div class="fld"><label>滙出做日曆（.ics）</label>'+
+     '<div class="bkinfo" style="margin-top:2px">滙出一個標準日曆檔，'+
+     'import 落 <b>iPhone／iPad 內置日曆、Google 日曆、Outlook</b> 之後，'+
+     '<b>提醒由系統自己發</b>——唔使開住個 App，就算電話鎖咗都會響。'+
+     '呢個係純網頁 App 攞到「真提醒」嘅唯一方法。</div>'+
+     '<div class="sgrid">'+
+       [['icsCourse','固定課堂',true],['icsOne','單次活動',true],
+        ['icsTodo','功課／待辦截止',true],['icsDead','倒數項目',true],
+        ['icsStudy','溫書記錄',true]].map(function(o){
+         return '<label class="cpchk"><input type="checkbox" id="'+o[0]+'" checked>'+
+           '<span>'+o[1]+'</span></label>';
+       }).join('')+
+     '</div>'+
+     '<div class="minrow" style="margin-top:10px">'+
+       '<span class="minunit" style="flex:none">提前</span>'+
+       '<input type="number" id="icsAlarm" min="0" max="120" step="5" inputmode="numeric" '+
+         'value="'+ICS_ALARM+'" placeholder="10">'+
+       '<span class="minunit">分鐘提醒（0 = 唔提醒）</span>'+
+     '</div>'+
+     '<button class="btn pri" id="icsGo" style="width:100%;margin-top:10px">'+
+       '滙出 .ics 日曆檔</button>'+
+     '<button class="btn" id="icsCopy" style="width:100%;margin-top:9px">'+
+       '複製 .ics 文字（唔想傳檔就用呢個）</button>'+
+     '<div class="bkinfo" id="icsResult" style="margin-top:10px">'+
+       '匯出之後，打開個檔案就會問你加唔加入系統日曆。<br>'+
+       'App 內嘅資料<b>唔會</b>被改動，之後想更新就再匯出一次。'+
+       '（注意：再 import 同一份會產生重複項目，'+
+       '建議喺日曆 App 度<b>先刪走舊嘅「時間表」日曆</b>再加新嘅。）</div></div>';
   h+=cloudFieldHtml();
   if(window.__upd) h+=window.__upd.field();
   box.innerHTML=h;
@@ -6187,6 +7149,26 @@ function drawSettings(){
   if(b3) b3.addEventListener('click',function(e){
     var b=e.target.closest('button[data-b]'); if(!b) return;
     setBadgeMode(b.dataset.b); drawSettings();
+  });
+  /* 科目顏色／圖示 */
+  var spb=document.getElementById('subjPrefBox');
+  if(spb) spb.addEventListener('click',function(e){
+    var row=e.target.closest('.sprow'); if(!row) return;
+    var btn=e.target.closest('button[data-act]'); if(!btn) return;
+    var code=row.dataset.code;
+    if(btn.dataset.act==='reset'){ setSubjectPref(code,{color:'',icon:''}); save(); drawSettings(); }
+    else openSubjPref(code);
+  });
+  /* 匯出 .ics */
+  var icsGo=document.getElementById('icsGo');
+  if(icsGo) icsGo.addEventListener('click',function(){ collectIcs(); doIcs(); });
+  var icsCp=document.getElementById('icsCopy');
+  if(icsCp) icsCp.addEventListener('click',function(){ collectIcs(); doIcsCopy(); });
+  var icsAl=document.getElementById('icsAlarm');
+  if(icsAl) icsAl.addEventListener('change',function(){
+    var v=parseInt(this.value,10);
+    if(!isFinite(v)||v<0) v=0;
+    ICS_ALARM=Math.min(120,v); this.value=ICS_ALARM;
   });
   /* 雲端同步 */
   var clUp=document.getElementById('clUp'); if(clUp) clUp.addEventListener('click',cloudUpload);
@@ -6264,6 +7246,7 @@ function defaultState(){
     pomoDone:{},
     acts:[],
     terms:null, termIdx:0,
+    subjectPref:{},
     badgeMode:'sess',  /* App 圖示角標：'sess' 本節計時 / 'day' 今日溫書時數 / 'off' 唔用 */
     seedDone:false
   };
@@ -6278,6 +7261,20 @@ function boot(){
   if(!S.deadlines||!Array.isArray(S.deadlines)) S.deadlines=[];
   if(!S.diary||!Array.isArray(S.diary)) S.diary=[];
   if(!S.todos||!Array.isArray(S.todos)) S.todos=[];
+  /* 待辦：補返 added（排序用）同清理型別。舊資料冇 added，
+     用陣列次序做一個穩定嘅假時間戳，令「未設截止日」嗰組唔會亂跳。 */
+  (function(){
+    var n=S.todos.length;
+    S.todos.forEach(function(t,i){
+      if(!t||typeof t!=='object') return;
+      if(typeof t.text!=='string') t.text=String(t.text==null?'':t.text);
+      if(t.due!=null && typeof t.due!=='string') t.due='';
+      if(typeof t.added!=='number'||!isFinite(t.added)||t.added<=0)
+        t.added = 1e12 + i;                 /* 保持原本先後次序 */
+      if(t.doneAt!=null && (typeof t.doneAt!=='number'||!isFinite(t.doneAt))) t.doneAt=null;
+      if(t.pin!=null && !t.pin) delete t.pin;
+    });
+  })();
   if(!S.oneOff||!Array.isArray(S.oneOff)) S.oneOff=[];
   if(!S.gpa||!Array.isArray(S.gpa)) S.gpa=[];
   /* 學期：舊資料冇 terms 就用預設（2026 秋季）補一個，令舊課堂照樣見到 */
@@ -6303,6 +7300,21 @@ function boot(){
     return x&&typeof x==='object'&&typeof x.d==='string'&&
            typeof x.s==='string'&&typeof x.e==='string';
   });
+  /* 自訂科目外觀：只保留 {color?: 有效色名, icon?: 非空短字串}，其餘垃圾一律清走。
+     用 prefKey 重新 key 一次，令 'FINA2303' 同 'fina 2303' 唔會變兩筆。 */
+  if(!S.subjectPref||typeof S.subjectPref!=='object'||Array.isArray(S.subjectPref)) S.subjectPref={};
+  (function(){
+    var clean={};
+    Object.keys(S.subjectPref).forEach(function(k0){
+      var k=prefKey(k0); if(!k) return;
+      var v=S.subjectPref[k0]; if(!v||typeof v!=='object') return;
+      var out={};
+      if(typeof v.color==='string' && PAL[v.color]) out.color=v.color;
+      if(typeof v.icon==='string'){ var ic=v.icon.trim().slice(0,4); if(ic) out.icon=ic; }
+      if(Object.keys(out).length) clean[k]=out;
+    });
+    S.subjectPref=clean;
+  })();
   /* 分科溫書：只保留 { 'YYYY-MM-DD': {科目: 正數分鐘} } 嘅形狀 */
   if(!S.studySubj||typeof S.studySubj!=='object') S.studySubj={};
   Object.keys(S.studySubj).forEach(function(ds){
@@ -6414,7 +7426,7 @@ window.addEventListener('focus',function(){
 
   var isFile = location.protocol === 'file:';
   /* 呢個常數要同 sw.js 嘅 VERSION 一致；設定頁靠對比兩者判斷有冇新版 */
-  var APP_VER = 'v41';
+  var APP_VER = 'v42';
   var ua = navigator.userAgent || '';
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
                    || window.navigator.standalone === true;
