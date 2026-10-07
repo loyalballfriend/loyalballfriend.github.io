@@ -3,7 +3,7 @@
    目的：把整個 App 快取到本機，無網絡也能開啟使用
    ============================================================ */
 
-const VERSION = 'v36';
+const VERSION = 'v40';
 const CACHE = 'timetable-' + VERSION;
 
 const ASSETS = [

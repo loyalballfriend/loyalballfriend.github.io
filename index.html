@@ -360,6 +360,29 @@
   .mo .tddot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#e5484d;
              margin-left:3px;vertical-align:1px}
 
+  /* ---------- 月總覽：手機要「剛剛好睇得晒」 ----------
+     上面用 minmax(520px,1fr)：桌面舒服，但螢幕窄過 520px 就會撐爆成 520px，
+     而 .card 係 overflow:hidden，於是右邊「六」同「溫書」兩欄會被直接切走
+     （390px 實測：容器 368px、月格 520px，差 152px，冇得捲）。
+     窄螢幕強制一欄 + 收窄內距／字級，令 8 欄塞得入 320px 以上嘅機。
+     用 `screen and` 而唔係純 max-width：唔想影響列印（列印另有 repeat(2,1fr)）。 */
+  @media screen and (max-width:760px){
+    .months{grid-template-columns:1fr;gap:12px;padding:10px}
+    .mo h3{font-size:12.5px;padding:8px 10px}
+    .mo h3 span{font-size:10.5px}
+    .mo th{font-size:9px;padding:4px 0}
+    .mo th.wksum,.mo td.wksum{width:28px}
+    .mo td{height:56px;padding:3px 1px;font-size:9.5px}
+    .mo .dn{font-size:9.5px}
+    .mo .chip{font-size:8.5px;padding:1px 1.5px;border-left-width:2px;border-radius:3px;
+              margin-top:1.5px;letter-spacing:-.2px}
+    .mo .chip.exam{border-left-width:3px}
+    .mo .more{font-size:8.5px}
+    .mo td.wksum b{font-size:11px}
+    .mo td.wksum small{font-size:8px}
+    .mo .tddot{width:4px;height:4px;margin-left:2px}
+  }
+
   /* ---------- 待辦清單 ---------- */
   .todo-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;
              flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
@@ -657,6 +680,44 @@
   html[data-theme="dark"] .ms-ar,
   html[data-theme="dark"] .ms-empty{background:#1b2130;border-color:#2c3446}
   html[data-theme="dark"] .ms-spark line{stroke:#2c3446}
+
+  /* ---------- 歌手統計（日記） ---------- */
+  .artstat{padding:12px 18px 14px;border-bottom:1px solid var(--line);background:#fbfcff}
+  .as-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+  .as-lbl{font-size:12px;font-weight:700;color:#7b8699;letter-spacing:.4px}
+  .as-seg{display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+  .as-seg button{appearance:none;border:0;background:#fff;font-family:inherit;
+                 font-size:11.5px;line-height:1;padding:5px 10px;cursor:pointer;color:var(--muted)}
+  .as-seg button+button{border-left:1px solid var(--line2)}
+  .as-seg button.on{background:var(--accent);color:#fff}
+  .as-tot{margin-left:auto;font-size:11.5px;color:var(--muted);
+          font-variant-numeric:tabular-nums;text-align:right}
+  .as-list{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+  .as-row{display:grid;grid-template-columns:20px minmax(0,1fr) minmax(46px,118px) 44px;
+          align-items:center;gap:8px}
+  .as-rk{font-size:11px;font-weight:700;color:#a7b0c0;text-align:right;
+         font-variant-numeric:tabular-nums}
+  .as-row:nth-child(1) .as-rk{color:var(--accent)}
+  .as-nm{font-size:12.5px;color:var(--text);overflow:hidden;text-overflow:ellipsis;
+         white-space:nowrap}
+  .as-bar{display:block;height:7px;border-radius:6px;background:#e9edf5;overflow:hidden}
+  .as-bar i{display:block;height:100%;border-radius:6px;background:var(--accent);opacity:.8}
+  .as-row:nth-child(1) .as-bar i{opacity:1}
+  .as-n{font-size:11px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+  .as-note{margin:9px 0 0;font-size:11.5px;color:var(--muted);line-height:1.6}
+  .as-retry{appearance:none;border:1px solid var(--line2);background:#fff;font-family:inherit;
+            font-size:11.5px;line-height:1;border-radius:20px;padding:4px 11px;margin-left:7px;
+            cursor:pointer;color:var(--accent);white-space:nowrap}
+  .as-retry:hover{border-color:var(--accent);background:var(--accent-soft)}
+  .as-busy{display:inline-block;margin-left:7px;font-size:11.5px;color:var(--accent)}
+  html[data-theme="dark"] .as-retry{background:#1b2130;border-color:#2c3446}
+  .as-empty{margin-top:10px;font-size:12.5px;color:var(--muted);line-height:1.7;
+            background:#fff;border:1px dashed var(--line2);border-radius:11px;padding:11px 13px}
+  html[data-theme="dark"] .artstat{background:#15181f}
+  html[data-theme="dark"] .as-seg button,
+  html[data-theme="dark"] .as-empty{background:#1b2130;border-color:#2c3446}
+  html[data-theme="dark"] .as-seg button.on{background:var(--accent);color:#fff}
+  html[data-theme="dark"] .as-bar{background:#2c3446}
   /* ---------- 學期 / 季度管理 ---------- */
   .tmlist{display:flex;flex-direction:column;gap:8px;margin:4px 0 12px}
   .tmitem{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:11px;
@@ -763,6 +824,10 @@
         overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* 30 秒試聽（原生 audio 播放器） */
   .dday-song .prevrow{margin-bottom:10px}
+  /* 認到嘅歌手名（歌手統計會用呢個名做合併） */
+  .dday-song .sartist{align-self:flex-start;font-size:11px;color:var(--accent);
+        background:var(--accent-soft);border-radius:999px;padding:2px 9px;
+        max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .dday-song .pvhead{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
   .dday-song .pvlbl{font-size:11.5px;font-weight:700;color:#2f5fd0;background:var(--accent-soft);
         border-radius:999px;padding:3px 9px;flex:0 0 auto}
@@ -904,6 +969,9 @@
     .ms-grid{grid-template-columns:repeat(2,1fr)}
     .ms-copy{margin-left:0}
     .ms-mk{min-width:0}
+    .artstat{padding:10px 12px 12px}
+    .as-row{grid-template-columns:18px minmax(0,1fr) minmax(38px,68px) 40px;gap:6px}
+    .as-tot{width:100%;margin-left:0;text-align:left}
   }
 
   /* 加入主畫面提示條 */
@@ -1338,6 +1406,7 @@
       </div>
     </div>
     <div class="msum" id="msum" hidden></div>
+    <div class="artstat" id="artStat" hidden></div>
     <div class="diary-body" id="diaryBody"></div>
     <input type="file" id="diaryFile" accept="image/*" multiple hidden>
   </div>
@@ -2480,7 +2549,11 @@ function drawMonths(){
         evs.slice(0,3).forEach(function(e){
           var p=PAL[e.color]||PAL.gray;
           var c2='chip'+(e.tag==='exam'?' exam':e.tag==='study'?' study':e.tag==='sess'?' sess':'');
-          html+='<span class="'+c2+'" style="background:'+p.bg+';border-left-color:'+p.bd+
+          /* 手機月格每欄得 ~45px，課號（'FINA 2303'）一定會被 text-overflow 截。
+             加 title 令懸停／長按睇得返全個課號、班別、時間、地點。 */
+          var ct=e.code+(e.sec?(' · '+e.sec):'')+(e.start?(' · '+e.start+(e.end?('–'+e.end):'')):'')+
+                 (e.room?(' · '+e.room):'');
+          html+='<span class="'+c2+'" title="'+esc(ct)+'" style="background:'+p.bg+';border-left-color:'+p.bd+
                 ';color:'+p.tx+'">'+esc(e.code)+'</span>';
         });
         if(evs.length>3) html+='<span class="more">+'+(evs.length-3)+'</span>';
@@ -3097,6 +3170,98 @@ function spotifyOpenUrl(s){ return 'https://open.spotify.com/'+s.type+'/'+s.id; 
 function spotifyLabel(t){
   return {track:'歌曲', album:'專輯', playlist:'播放清單', artist:'歌手', episode:'單集', show:'節目'}[t]||'音樂';
 }
+
+/* ---------- 歌手（「歌手統計」用） ----------
+   一首歌嘅歌手名可能由幾個地方嚟，按可靠程度排先後：
+     1. song.artist          —— 手動填，或者由 iTunes 自動填返（最可靠）
+     2. song.preview.artist  —— iTunes Search 回傳嘅 artistName
+     3. type === 'artist'    —— 貼嘅係「歌手」連結，oEmbed 個 title 本身就係歌手名
+     4. 由「歌名／備註」拆     —— 只認前後都有空位嘅分隔符，
+                                所以 "Jay-Z"、"AC/DC"、"blink-182" 唔會被拆爛
+   四樣都冇 → 當「未知名稱」（唔亂估，寧願留空）。
+
+   註：Spotify 嘅連結本身只有一個 track id，冇歌手名。
+   官方 oEmbed（唯一有 CORS 嘅端點）只回曲名，冇 artist 欄位；
+   embed 頁雖然有歌手名，但冇 Access-Control-Allow-Origin，瀏覽器讀唔到。
+   所以實際路徑係：Spotify 連結 → oEmbed 拎到「準確曲名」→ iTunes 用曲名配對 → 歌手名。 */
+var ART_SEP=/\s+[–—\-|｜·•]\s+/;
+/* 配對用嘅正規化：去掉大小寫、括號內容、feat.、所有標點同空白 */
+function songKey(s){
+  return String(s==null?'':s).toLowerCase()
+    .replace(/[（(\[][^)）\]]*[)）\]]/g,' ')
+    .replace(/\b(?:feat|ft|with)\b\.?.*$/,' ')
+    .replace(/[^0-9a-z\u4e00-\u9fff\u3040-\u30ff]+/g,'');
+}
+/* 嚴謹版：只去大小寫同多餘空白，括號保留（用嚟分辨 "X" 同 "X (Cover)"） */
+function songKeyExact(s){
+  return String(s==null?'':s).trim().replace(/\s+/g,' ').toLowerCase();
+}
+function artistFromLabel(label, title){
+  var s=String(label||'').trim(); if(!s) return '';
+  var parts=s.split(ART_SEP);
+  if(parts.length<2) return '';
+  var a=parts[0].trim(), b=parts.slice(1).join(' ').trim();
+  /* 有人會寫「歌名 – 歌手」（次序調轉）；頭一段其實就係歌名就改用尾嗰段 */
+  if(b && title && songKey(a) && songKey(a)===songKey(title)) a=b;
+  return (a.length>=2 && a.length<=60) ? a : '';
+}
+/* 1–3：唔使猜嘅來源（表單預填用呢個，唔會將「拆出嚟」嘅名當成用家填過） */
+function songArtistAuto(song){
+  if(!song) return '';
+  var a=String(song.artist==null?'':song.artist).trim();
+  if(a) return a;
+  if(song.preview && song.preview.artist) return String(song.preview.artist).trim();
+  if(song.type==='artist'){
+    var t=String((song.meta && song.meta.title) || '').trim();
+    if(t) return t;
+  }
+  return '';
+}
+function songArtist(song){
+  if(!song) return '';
+  return songArtistAuto(song) ||
+    artistFromLabel(song.label, song.meta && song.meta.title);
+}
+/* 合併用嘅 key：忽略大小寫同多餘空白（"Taylor Swift" = "taylor  swift"） */
+function artistKey(name){
+  return String(name==null?'':name).trim().replace(/\s+/g,' ').toLowerCase();
+}
+/* 由一堆日記條目統計歌手：
+     n     = 出現日數（一首歌一日，所以等於「聽咗幾多次」）
+     songs = 唔同歌曲數
+   同名會合併；顯示名取「出現最多」嗰個寫法（避免一時大寫一時細寫）。 */
+function artistAgg(days){
+  var cnt={}, order=[], variants={}, sset={}, songSet={}, unknown=0, total=0;
+  (days||[]).forEach(function(d){
+    if(!d || !d.song || !d.song.id) return;
+    total++;
+    var sk=(d.song.type||'track')+':'+d.song.id;
+    songSet[sk]=1;
+    var a=songArtist(d.song);
+    var k=artistKey(a);
+    if(!k){ unknown++; return; }
+    if(!cnt[k]){ cnt[k]=0; order.push(k); variants[k]={}; sset[k]={}; }
+    cnt[k]++;
+    variants[k][a]=(variants[k][a]||0)+1;
+    sset[k][sk]=1;
+  });
+  var list=order.map(function(k){
+    var v=variants[k], best='', bn=-1;
+    Object.keys(v).forEach(function(nm){ if(v[nm]>bn){ bn=v[nm]; best=nm; } });
+    return { name:best, n:cnt[k], songs:Object.keys(sset[k]).length };
+  }).sort(function(x,y){
+    return y.n-x.n || (x.name<y.name ? -1 : (x.name>y.name ? 1 : 0));
+  });
+  return { list:list, total:total, unknown:unknown, artists:list.length,
+           songs:Object.keys(songSet).length, top:list.length ? list[0] : null };
+}
+/* scope：'all' = 全部時間；'YYYY-MM' = 某個月 */
+function diaryDaysIn(scope){
+  var all=S.diary||[];
+  if(!scope || scope==='all') return all.slice();
+  return all.filter(function(d){ return mkOf(d.date)===scope; });
+}
+function artistStats(scope){ return artistAgg(diaryDaysIn(scope)); }
 /* 用官方 oEmbed 拎封面 + 曲名（唔需要登入；已支援 CORS） */
 var songMetaCache={};
 function fetchSongMeta(song, cb){
@@ -3123,31 +3288,81 @@ function fetchSongMeta(song, cb){
     x.send();
   }catch(e){ cb(null); }
 }
-/* 30 秒試聽：iTunes Search API（免 key、CORS *），用歌名／備註搜尋 */
+/* 30 秒試聽 + 歌手名：iTunes Search API（免 key、CORS *）
+   ─ 用「oEmbed 拎到嘅準確曲名」做主要搜尋詞（歌名／備註做次選）
+   ─ 攞 5 個結果返嚟評分，唔再盲取第一個（減少「認錯歌手」）
+   ─ 專輯連結用 entity=album（collectionName 配對，artistName 就係專輯歌手） */
 var previewCache={};
+/* 喺 iTunes 結果入面揀最似嘅一個：
+     ・原字串一模一樣（連括號）→ 最高分（分辨原曲 vs "X (Cover)"）
+     ・正規化後一樣 → 高分
+     ・互相包含 → 中分
+     ・有 30 秒試聽 / 有歌手名 → 各加少少（同分時優先）
+   唔再盲取 results[0]，所以唔會隨便認錯歌手。 */
+function pickItunes(list, want, wantRaw, isAlbum){
+  var best=null, bestScore=-1;
+  (list||[]).forEach(function(r){
+    var nm = isAlbum ? r.collectionName : r.trackName;
+    var k = songKey(nm), raw = songKeyExact(nm);
+    var s = 0;
+    if(raw && wantRaw && raw===wantRaw) s += 5;
+    if(k && k===want) s += 6;
+    else if(k && want && (k.indexOf(want)>=0 || want.indexOf(k)>=0)) s += 3;
+    if(r.previewUrl) s += 2;
+    if(r.artistName) s += 1;
+    if(s>bestScore){ bestScore=s; best=r; }
+  });
+  return best;
+}
 function fetchSongPreview(song, cb){
-  var q=String((song && (song.label || (song.meta && song.meta.title))) || '').trim();
-  if(!q){ cb(null); return; }
-  if(previewCache[q]!==undefined){ cb(previewCache[q]); return; }
-  try{
-    var x=new XMLHttpRequest();
-    x.open('GET','https://itunes.apple.com/search?entity=song&limit=1&term='+encodeURIComponent(q),true);
-    x.timeout=9000;
-    x.onload=function(){
-      var out=null;
-      if(x.status>=200&&x.status<300){
-        try{
-          var j=JSON.parse(x.responseText), r=(j.results||[])[0];
-          if(r && r.previewUrl) out={ url:r.previewUrl, track:r.trackName||'', artist:r.artistName||'' };
-        }catch(e){ out=null; }
-      }
+  var isAlbum = !!(song && song.type==='album');
+  var terms=[], mt='', lb='';
+  if(song){
+    mt=String((song.meta && song.meta.title) || '').trim();
+    lb=String(song.label || '').trim();
+  }
+  if(mt) terms.push(mt);
+  if(lb && songKey(lb)!==songKey(mt)) terms.push(lb);
+  if(!terms.length){ cb(null); return; }
+  var idx=0;
+  (function next(){
+    if(idx>=terms.length){ cb(null); return; }
+    var q=terms[idx++];
+    if(previewCache[q]!==undefined){
+      if(previewCache[q]){ cb(previewCache[q]); return; }
+      next(); return;
+    }
+    var done=false;
+    function finish(out){
+      if(done) return; done=true;
       previewCache[q]=out;
-      cb(out);
-    };
-    x.onerror=function(){ cb(null); };
-    x.ontimeout=function(){ cb(null); };
-    x.send();
-  }catch(e){ cb(null); }
+      if(out) cb(out); else next();
+    }
+    try{
+      var x=new XMLHttpRequest();
+      x.open('GET','https://itunes.apple.com/search?entity='+(isAlbum?'album':'song')+
+        '&limit=5&term='+encodeURIComponent(q),true);
+      x.timeout=9000;
+      x.onload=function(){
+        var out=null;
+        if(x.status>=200&&x.status<300){
+          try{
+            var j=JSON.parse(x.responseText);
+            var r=pickItunes(j.results||[], songKey(q), songKeyExact(q), isAlbum);
+            /* 有結果就記住 artistName —— 就算冇 previewUrl（唔少歌都冇），
+               歌手名一樣可以用嚟做統計。songHtml 只會喺有 url 時才出播放器。 */
+            if(r) out={ url:r.previewUrl||'',
+                        track:r.trackName || r.collectionName || '',
+                        artist:r.artistName||'' };
+          }catch(e){ out=null; }
+        }
+        finish(out);
+      };
+      x.onerror=function(){ finish(null); };
+      x.ontimeout=function(){ finish(null); };
+      x.send();
+    }catch(e){ finish(null); }
+  })();
 }
 function songHtml(song){
   if(!song||!song.id){
@@ -3159,6 +3374,9 @@ function songHtml(song){
     : '<span class="cover ph">COVER</span>';
   var title = meta.title || song.label || spotifyLabel(song.type);
   var sub = (song.label && song.label!==title) ? song.label : (spotifyLabel(song.type)+'　·　Spotify');
+  /* 認到嘅歌手（用嚟做「歌手統計」）；認唔到就唔顯示，免得誤導 */
+  var art = songArtist(song);
+  var artHtml = art ? '<span class="sartist" title="歌手統計會計呢個名">歌手 · '+esc(art)+'</span>' : '';
   /* 30 秒試聽（iTunes 搜尋，免 key、有 CORS）→ 原生 audio */
   var prev='';
   if(song.preview && song.preview.url){
@@ -3175,7 +3393,7 @@ function songHtml(song){
     '</div>'+
     '<div class="srow">'+cover+
       '<div class="smeta"><b class="stitle">'+esc(title)+'</b>'+
-        '<span class="ssub">'+esc(sub)+'</span></div>'+
+        '<span class="ssub">'+esc(sub)+'</span>'+artHtml+'</div>'+
     '</div>'+
     prev+
     '<a class="open" href="'+spotifyOpenUrl(song)+'" target="_blank" rel="noopener">喺 Spotify 開啟全曲 ↗</a>'+
@@ -3225,10 +3443,21 @@ function bindDiarySongs(scope){
     function rerender(){
       var cur=document.querySelector('#diaryBody .dday[data-id="'+d.id+'"] .dday-song');
       if(cur) cur.outerHTML=songHtml(d.song);
+      drawArtStat();   /* 認到歌手之後，統計卡即刻跟住更新 */
     }
     function fetchPreview(){
       if(d.song.preview!==undefined){ save(); rerender(); return; }
-      fetchSongPreview(d.song,function(p){ d.song.preview=p; save(); rerender(); });
+      fetchSongPreview(d.song,function(p){
+        d.song.preview=p;
+        /* 「歌曲」同「專輯」連結先信 iTunes 嘅 artistName：
+           歌曲用曲名搜、專輯用 entity=album 搜，兩者都對得上。
+           播放清單／節目係好多歌手夾埋，夾到嘅 artistName 同本身冇關係，所以唔填。
+           已經有歌手名（手動填）就唔覆蓋。 */
+        var ty=d.song.type||'track';
+        if(p && p.artist && !d.song.artist && (ty==='track' || ty==='album'))
+          d.song.artist=p.artist;
+        save(); rerender();
+      });
     }
     if(d.song.meta){ fetchPreview(); return; }
     fetchSongMeta(d.song,function(m){
@@ -3339,6 +3568,7 @@ function summarizeMonth(mk){
   }
   z.moodList=moodList;
   z.kws=topKeywords(textAll, 6);
+  z.art=artistStats(mk);          /* 歌手統計（見 songArtist / artistAgg） */
   return z;
 }
 /* 一句自動生成嘅總結文字 */
@@ -3352,6 +3582,10 @@ function summarySentence(z){
   }
   if(z.ph) s.push('相簿有 '+z.ph+' 張相'+(z.songs?('，揀咗 '+z.songs+' 首歌'):'')+'。');
   else if(z.songs) s.push('揀咗 '+z.songs+' 首歌。');
+  if(z.art && z.art.top){
+    s.push('聽得最多係 '+z.art.top.name+'（'+z.art.top.n+' 日'+
+      (z.art.artists>1?('，成個月共 '+z.art.artists+' 位歌手'):'')+'）。');
+  }
   if(z.noteDays) s.push('有 '+z.noteDays+' 日寫咗字，加埋 '+z.words+' 個字。');
   if(z.stMin) s.push('今個月溫書 '+hTxt(z.stMin)+' 小時'+
     (z.actM?('，另外 '+hTxt(z.actM)+' 小時做咗其他嘢'):'')+'。');
@@ -3393,6 +3627,9 @@ function summaryText(mk){
   }
   if(z.kws.length) L.push('成日提到：'+
     z.kws.map(function(k){ return k.k+'×'+k.n; }).join('、'));
+  if(z.art && z.art.list.length) L.push('歌手：'+
+    z.art.list.slice(0,5).map(function(x){ return x.name+'×'+x.n; }).join('、')+
+    (z.art.artists>5?('　（共 '+z.art.artists+' 位）'):''));
   if(z.stMin) L.push('溫書：'+hTxt(z.stMin)+' 小時（'+z.stDays+' 日）');
   if(z.actM) L.push('非溫書：'+hTxt(z.actM)+' 小時（'+z.actN+' 段）');
   return L.filter(function(x){ return x; }).join('\n');
@@ -3450,6 +3687,14 @@ function drawMsum(){
       z.kws.map(function(k){ return '<span class="ms-chip">'+esc(k.k)+'<i>'+k.n+'</i></span>'; }).join('')+
       '</div>';
   }
+  if(z.art && z.art.list.length){
+    h+='<div class="ms-kw"><span class="ms-kwl">歌手</span>'+
+      z.art.list.slice(0,6).map(function(x){
+        return '<span class="ms-chip">'+esc(x.name)+'<i>'+x.n+'</i></span>';
+      }).join('')+
+      (z.art.artists>6?('<span class="ms-kwl">另 '+(z.art.artists-6)+' 位</span>'):'')+
+      '</div>';
+  }
   if(z.best && z.worst && z.best.v!==z.worst.v){
     h+='<div class="ms-hi">心情最好 <b>'+md(new Date(z.best.ds+'T00:00:00'))+' '+MOODS[z.best.v-1]+
        '</b>　·　最低 <b>'+md(new Date(z.worst.ds+'T00:00:00'))+' '+MOODS[z.worst.v-1]+'</b></div>';
@@ -3459,8 +3704,8 @@ function drawMsum(){
 }
 function bindMsum(){
   var p=document.getElementById('msPrev'), n=document.getElementById('msNext');
-  if(p) p.addEventListener('click',function(){ MSEL=mkAdd(MSEL,-1); drawMsum(); });
-  if(n) n.addEventListener('click',function(){ MSEL=mkAdd(MSEL,1); drawMsum(); });
+  if(p) p.addEventListener('click',function(){ MSEL=mkAdd(MSEL,-1); drawMsum(); drawArtStat(); });
+  if(n) n.addEventListener('click',function(){ MSEL=mkAdd(MSEL,1); drawMsum(); drawArtStat(); });
   var c=document.getElementById('msCopy');
   if(c) c.addEventListener('click',function(){
     copyText(summaryText(MSEL), function(ok){
@@ -3497,14 +3742,115 @@ function fallbackCopy(t){
     return !!ok;
   }catch(e){ return false; }
 }
+/* ---------- 歌手統計（日記） ----------
+   同「每月總結」分開一張卡，因為佢係獨立嘅排行：可以睇「全部時間」，
+   亦可以跟住上面每月總結嗰個月睇。 */
+var ART_SCOPE='all';      /* 'all' = 全部時間；'month' = 跟住 MSEL */
+var ART_TOP=8;            /* 最多列幾多位 */
+var ART_RETRY=false;      /* 撳咗「重新認歌手」，抓緊嘅時候顯示提示 */
+var ART_RETRY_T=null;
+function drawArtStat(){
+  var el=document.getElementById('artStat'); if(!el) return;
+  if(!Array.isArray(S.diary)) S.diary=[];
+  var hasSong=false;
+  S.diary.forEach(function(d){ if(d.song && d.song.id) hasSong=true; });
+  if(!hasSong){ el.hidden=true; el.innerHTML=''; return; }
+  if(!MSEL) MSEL=mkDefault();
+  var byMonth=(ART_SCOPE==='month');
+  var a=artistStats(byMonth ? MSEL : 'all');
+  var mkNo=parseInt(String(MSEL).slice(5,7),10);
+  el.hidden=false;
+
+  var h='<div class="as-head">'+
+    '<span class="as-lbl">歌手統計</span>'+
+    '<span class="as-seg">'+
+      '<button type="button" data-scope="all"'+(byMonth?'':' class="on"')+'>全部時間</button>'+
+      '<button type="button" data-scope="month"'+(byMonth?' class="on"':'')+'>'+mkNo+' 月</button>'+
+    '</span>'+
+    '<span class="as-tot">'+a.total+' 日有歌'+
+      (a.artists?('　·　'+a.artists+' 位歌手'):'')+
+      (a.songs?('　·　'+a.songs+' 首'):'')+
+    '</span>'+
+    '</div>';
+
+  if(!a.total){
+    h+='<div class="as-empty">'+esc(byMonth?mkLabel(MSEL):'')+
+      '未有歌曲記錄。喺日記撳「＋ 每日一歌」貼上 Spotify 連結，呢度就會自動統計歌手。</div>';
+    el.innerHTML=h; return;
+  }
+  if(!a.artists){
+    h+='<div class="as-empty">有 '+a.total+' 日嘅歌，但仲未認到歌手名。<br>'+
+      '可以撳下面「重新認歌手」，或者撳嗰首歌嘅「更換」→ 填「歌手」（例：Taylor Swift）。'+
+      asRetryBtn()+'</div>';
+    el.innerHTML=h; return;
+  }
+
+  var topN=a.list[0].n || 1;
+  h+='<div class="as-list">'+a.list.slice(0,ART_TOP).map(function(x,i){
+    var pct=Math.max(5, Math.round(x.n/topN*100));
+    return '<div class="as-row">'+
+      '<span class="as-rk">'+(i+1)+'</span>'+
+      '<span class="as-nm" title="'+esc(x.name)+(x.songs>1?('　'+x.songs+' 首'):'')+'">'+
+        esc(x.name)+'</span>'+
+      '<span class="as-bar"><i style="width:'+pct+'%"></i></span>'+
+      '<span class="as-n">'+x.n+' 日</span>'+
+    '</div>';
+  }).join('')+'</div>';
+
+  if(a.list.length>ART_TOP)
+    h+='<p class="as-note">另有 '+(a.list.length-ART_TOP)+' 位歌手冇列出。</p>';
+  if(a.unknown)
+    h+='<p class="as-note">有 '+a.unknown+' 日嘅歌未認到歌手名 —— 撳嗰首歌「更換」，'+
+       '填返「歌手」就會計埋。'+asRetryBtn()+'</p>';
+  el.innerHTML=h;
+}
+/* 「重新認歌手」掣：撳咗會清快取、重設未認到嘅歌，再抓一次 */
+function asRetryBtn(){
+  if(ART_RETRY) return '<span class="as-busy">認緊歌手名…</span>';
+  return '<button type="button" class="as-retry" data-act="retry">重新認歌手</button>';
+}
+function retryArtists(){
+  previewCache={};                    /* 唔清嘅話會即刻由快取回返舊嘅「搵唔到」 */
+  var n=0;
+  S.diary.forEach(function(d){
+    if(!d.song || !d.song.id) return;
+    if(songArtistAuto(d.song)) return;      /* 已經有歌手名（手動／iTunes）唔郁 */
+    var ty=d.song.type||'track';
+    if(ty!=='track' && ty!=='album') return;/* 播放清單／節目本身冇單一歌手 */
+    d.song.preview=undefined;               /* 重設，令 bindDiarySongs 肯再抓 */
+    n++;
+  });
+  if(!n) return;
+  ART_RETRY=true;
+  save(); drawDiary();
+  /* 抓完（或者抓唔到）就收返個狀態，唔會永遠轉 */
+  clearTimeout(ART_RETRY_T);
+  ART_RETRY_T=setTimeout(function(){ ART_RETRY=false; drawArtStat(); },5000);
+}
+/* 統計卡係重新渲染出嚟嘅，所以用事件委派綁喺外層（唔怕按鈕被換走） */
+document.getElementById('artStat').addEventListener('click',function(e){
+  var t=e.target;
+  if(t && t.closest && t.closest('[data-act="retry"]')){ retryArtists(); return; }
+  var b=t && t.closest ? t.closest('[data-scope]') : null;
+  if(!b || !this.contains(b)) return;
+  var want=(b.getAttribute('data-scope')==='month') ? 'month' : 'all';
+  if(want===ART_SCOPE) return;
+  ART_SCOPE=want;
+  drawArtStat();
+});
+
 function drawDiary(){
   var body=document.getElementById('diaryBody'); if(!body) return;
   if(!Array.isArray(S.diary)) S.diary=[];
   diarySort();
   var st=document.getElementById('diaryStat');
   var days=S.diary.length, ph=diaryPhotoCount();
-  if(st) st.textContent = days ? (days+' 日記錄　·　'+ph+' 張相片') : '還沒有記錄';
+  var artN=artistStats('all').artists;
+  if(st) st.textContent = days
+    ? (days+' 日記錄　·　'+ph+' 張相片'+(artN?('　·　'+artN+' 位歌手'):''))
+    : '還沒有記錄';
   drawMsum();
+  drawArtStat();
   if(!days){
     body.innerHTML='<div class="dempty"><b>還沒有每日記錄</b>'+
       '按「＋ 新增一日」，就可以擺嗰日嘅相、打少少 caption<br>'+
@@ -3703,9 +4049,13 @@ function songForm(dayId){
       '" placeholder="https://open.spotify.com/track/…　或　spotify:track:…"></div>'+
     '<div class="fld"><label>歌名／備註（選填）</label>'+
       '<input id="sgLabel" value="'+esc(cur.label||'')+'" placeholder="例：Taylor Swift – Anti-Hero"></div>'+
+    '<div class="fld"><label>歌手（選填，用嚟做「歌手統計」）</label>'+
+      '<input id="sgArtist" value="'+esc(songArtistAuto(cur))+'" placeholder="例：Taylor Swift"></div>'+
     '<div class="songerr" id="sgErr"></div>'+
     '<p class="dhint">喺 Spotify 撳「分享 → 複製歌曲連結」，貼上面就得；支援歌曲／專輯／播放清單／單集。'+
-    '<br>會自動用「歌名／備註」搵 30 秒試聽（建議填「歌手 歌名」會準啲）。'+
+    '<br>會自動用 Spotify 個曲名去搵 30 秒試聽同歌手名（歌名／備註填「歌手 歌名」會更準）。'+
+    '<br>「歌手」留空的話：歌曲／專輯連結會自動認歌手；貼歌手連結就以該歌手為準；'+
+    '播放清單／節目本身冇單一歌手，就要自己填。'+
     (cur.id?'<br>現時：'+spotifyLabel(cur.type):'')+'</p>'+
     '</div><div class="ft">'+
     (cur.id?'<button class="btn danger" id="sgDel">移除</button>':'')+
@@ -3723,7 +4073,9 @@ function songForm(dayId){
       err.textContent='認唔到呢個 Spotify 連結，請貼歌曲／專輯／播放清單連結。';
       document.getElementById('sgUrl').focus(); return;
     }
-    d.song={ type:p.type, id:p.id, label:document.getElementById('sgLabel').value.trim() };
+    var cur=d.song||{};
+    d.song={ type:p.type, id:p.id, label:document.getElementById('sgLabel').value.trim(),
+             artist:document.getElementById('sgArtist').value.trim() };
     closeModal(); save(); drawDiary();
   });
   var u=document.getElementById('sgUrl'); if(u) u.focus();
@@ -4530,10 +4882,34 @@ function subjColor(code){
   for(var i=0;i<S.courses.length;i++) if(S.courses[i].code===code) return S.courses[i].color;
   return 'gray';
 }
+
+/* ---------- 邊啲嘢先算係「科目」 ----------
+   課表上面唔止有課堂：仲有「溫書時段」（tag:'study'）同計時器記錄。
+   佢哋一樣係 S.courses 嘅成員，但冇成績、冇學分，
+   所以絕對唔應該出現喺「目標成績」嘅科目清單入面。
+   （新增溫書時段時如果冇填代號，code 會自動填做 '溫書'。） */
+var NOT_SUBJECT = {'溫書':1, '計時':1, '計時記錄':1};
+
+function isSubjectCode(code){
+  var k = String(code==null ? '' : code).trim();
+  return !!k && !NOT_SUBJECT[k];
+}
+function isSubjectCourse(c){
+  if(!c || !isSubjectCode(c.code)) return false;
+  return (c.tag || 'class') === 'class';   /* 舊資料冇 tag → 當課堂 */
+}
+
 function allSubjects(){
   var out=[], seen={};
-  S.courses.forEach(function(c){ if(c.code && !seen[c.code]){ seen[c.code]=1; out.push(c.code); } });
-  Object.keys(S.grades).forEach(function(k){ if(!seen[k]){ seen[k]=1; out.push(k); } });
+  S.courses.forEach(function(c){
+    if(!isSubjectCourse(c) || seen[c.code]) return;
+    seen[c.code]=1; out.push(c.code);
+  });
+  /* 成績紀錄入面嘅科目照樣保留（可能係課表冇嘅科），但一樣要剔走溫書等 */
+  Object.keys(S.grades).forEach(function(k){
+    if(seen[k] || !isSubjectCode(k)) return;
+    seen[k]=1; out.push(k);
+  });
   return out;
 }
 function gradeRec(code){
@@ -5495,7 +5871,7 @@ window.addEventListener('focus',function(){
 
   var isFile = location.protocol === 'file:';
   /* 呢個常數要同 sw.js 嘅 VERSION 一致；設定頁靠對比兩者判斷有冇新版 */
-  var APP_VER = 'v36';
+  var APP_VER = 'v40';
   var ua = navigator.userAgent || '';
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
                    || window.navigator.standalone === true;
