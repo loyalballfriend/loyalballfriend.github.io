@@ -1452,6 +1452,12 @@
   .clstat b{color:var(--text);font-weight:500;font-variant-numeric:tabular-nums;word-break:break-all}
   .clstat.ok{color:#1d9e75}
   .clstat.bad{color:#d85a30}
+  /* 雲端同步：相片選項嘅補充說明同大小提示 */
+  .fld label.cpchk .clnote{display:block;margin-top:3px;font-size:11.5px;font-weight:400;
+    color:var(--muted);line-height:1.55}
+  .clsz{margin-top:9px;padding:8px 10px;border-radius:8px;background:var(--bg2);
+    font-size:11.5px;line-height:1.6;color:var(--muted)}
+  .clsz b{color:var(--text);font-variant-numeric:tabular-nums}
   html[data-theme="dark"] .clin{background:#12171f}
   html[data-theme="dark"] .clstat.ok{color:#5dcaa5}
   html[data-theme="dark"] .clstat.bad{color:#f0997b}
@@ -5973,6 +5979,84 @@ function fmtSize(n){
   if(n < 1048576) return (n/1024).toFixed(1)+' KB';
   return (n/1048576).toFixed(1)+' MB';
 }
+/* ---------- gzip（雲端同步用） ----------
+   GitHub Gist 每個檔案只回傳頭 1 MB，一超過就 f.truncated=true，下載唔到。
+   日記相片係 1280px JPEG 嘅 base64（一張 150–450 KB），三四張就爆。
+   所以上傳前先用 gzip 壓一次：
+   - 純 JSON（冇相）通常壓到原本嘅 1/6 – 1/4；
+   - 相片係 base64 JPEG，已經壓縮過，gzip 得 1–2 成，但都聊勝於無。
+   支援 CompressionStream 就用（Chrome 80+/Safari 16.4+/iOS 16.4+），
+   唔支援就原樣上傳（向後兼容，唔會壞）。
+   格式：gzip 出嚟係二進位，base64 之後包成 { _gz:1, n:<原文字數>, d:'<base64>' }。
+   下載嗰邊見到 _gz 就解壓，冇 _gz 就當舊版純 JSON 直接讀 —— 新舊都通。 */
+function gzSupported(){
+  return (typeof CompressionStream === 'function') &&
+         (typeof DecompressionStream === 'function') &&
+         (typeof TextEncoder === 'function') && (typeof TextDecoder === 'function');
+}
+function b64FromBytes(bytes){
+  var s='', CH=0x8000;   /* 一次過太大會爆 call stack，要切件 */
+  for(var i=0;i<bytes.length;i+=CH){
+    s += String.fromCharCode.apply(null, bytes.subarray(i, i+CH));
+  }
+  return btoa(s);
+}
+function bytesFromB64(b64){
+  var bin=atob(b64), out=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+  return out;
+}
+/* 壓縮：cb(err, text) —— text 係可以塞入 gist 嘅字串。
+   ⚠ 呢度唔可以引用 APP_VER：佢係喺下面 PWA 段落嘅另一個 IIFE 入面用 var 宣告，
+     呢個 scope 睇唔到，一寫就會 ReferenceError，而個 error 會被 .catch 食咗，
+     變成「靜靜哋唔壓縮」——最難捉嘅一種 bug。 */
+function gzPack(text, cb){
+  if(!gzSupported()){ cb(null, text); return; }
+  try{
+    var cs=new CompressionStream('gzip');
+    var w=cs.writable.getWriter();
+    /* ⚠ write() 一定要 await／catch：如果唔係，writer 收到錯誤會變成
+       unhandled rejection，而 close() 就會跟住炸，成個壓縮靜靜哋失敗。 */
+    w.write(new TextEncoder().encode(text)).then(function(){ return w.close(); })
+     .catch(function(){ /* 下面 .arrayBuffer() 會 reject，統一喺嗰度處理 */ });
+    new Response(cs.readable).arrayBuffer().then(function(ab){
+      var bytes=new Uint8Array(ab);
+      var b64=b64FromBytes(bytes);
+      /* 包成 JSON。加 "_gz" 標記令下載嗰邊知係壓縮過。 */
+      cb(null, JSON.stringify({ _gz:1, n:text.length, d:b64 }));
+    }).catch(function(e){
+      /* 壓唔到就原樣上傳（唔會壞，只係冇細到）。但唔好靜靜哋，
+         留個記錄方便將來查。 */
+      try{ if(console && console.warn) console.warn('gzPack 失敗，改為原樣上傳：', e && e.message); }catch(_e){}
+      cb(null, text);
+    });
+  }catch(e){
+    try{ if(console && console.warn) console.warn('gzPack 同步失敗：', e && e.message); }catch(_e){}
+    cb(null, text);
+  }
+}
+/* 解壓：輸入係 gist 檔案內容字串，回傳 Promise<string>（原始 JSON 文字）。
+   如果唔係 gzip 包裝（舊版上傳嘅），就直接回傳原文 —— 咁就新舊都讀得。 */
+function gzUnpack(text){
+  var obj=null;
+  try{ obj = JSON.parse(text); }catch(e){ obj=null; }
+  if(!obj || !obj._gz || typeof obj.d!=='string'){
+    return Promise.resolve(text);   /* 舊格式／未壓縮 */
+  }
+  if(!gzSupported()){
+    return Promise.reject('呢個瀏覽器唔支援解壓（gzip），但雲端係壓縮檔。\n'+
+      '請用較新嘅 Safari（16.4+）或 Chrome 開啟，或者去另一部機下載。');
+  }
+  try{
+    var bytes=bytesFromB64(obj.d);
+    var ds=new DecompressionStream('gzip');
+    var w=ds.writable.getWriter();
+    w.write(bytes); w.close();
+    return new Response(ds.readable).text();
+  }catch(e){
+    return Promise.reject('解壓失敗：'+(e&&e.message?e.message:e));
+  }
+}
 function buildPackObj(photos, includePhotos){
   var p = { app:BK_APP, format:3, exportedAt:new Date().toISOString(),
             title:S.title, state:S, photos: includePhotos ? (photos||[]) : [] };
@@ -6713,16 +6797,38 @@ function cloudUpload(){
   if(tw && !confirm(tw)){ cloudMsg('已取消上傳。'); return; }
   cloudBusy('打包中…');
   idbAll(function(photos){
-    var txt = JSON.stringify(buildPackObj(photos, CLOUD.inc));
-    if(txt.length > CLOUD_MAX){
-      if(!confirm('⚠️ 份資料約 '+fmtSize(txt.length)+'，超過 Gist API 每個檔案 1 MB 嘅讀取上限，'+
-                  '將來下載會被截斷。\n\n建議閂掉「包含日記相片」再上傳。\n\n仍然要上傳嗎？')){
+    uploadWith(photos, CLOUD.inc, false);
+  });
+}
+/* 真正嘅上傳流程。allowRetryNoPhoto = 呢次係「已經去咗相片再試」 */
+function uploadWith(photos, inc, alreadyRetried){
+  var txt = JSON.stringify(buildPackObj(photos, inc));
+  var rawLen = txt.length;
+  cloudBusy(gzSupported() ? '壓縮中…' : '準備中…');
+  gzPack(txt, function(gerr, payload){
+    var len = payload.length;
+    /* 壓完仲係太大：自動幫用戶去相片再壓一次（唔再用 confirm 嚇人）。
+       只有「已經冇相」都仲爆先至真的要問。 */
+    if(len > CLOUD_MAX && inc && !alreadyRetried){
+      cloudMsg('份資料壓縮後仍然 '+fmtSize(len)+'，自動改為唔包相片再試…');
+      uploadWith(photos, false, true);
+      return;
+    }
+    if(len > CLOUD_MAX){
+      var tip = inc
+        ? '（已經包含日記相片）'
+        : '（已經唔包相片，主要係日記文字／成績／待辦太多）';
+      if(!confirm('⚠️ 份資料壓縮後仍然有 '+fmtSize(len)+' '+tip+'，\n'+
+                  '超過 Gist API 每個檔案 1 MB 嘅讀取上限，將來下載會被截斷。\n\n'+
+                  '建議：先「匯出備份」存一份落機，再考慮清理舊日記。\n\n'+
+                  '仍然要上傳嗎？')){
         CLOUD_BUSY=false; cloudMsg('已取消上傳。'); return;
       }
     }
     var body = { description:'時間表備份（自動同步用）', files:{} };
-    body.files[GH_FILE] = { content: txt };
-    if(!CLOUD.gistId){ cloudCreate(body, txt.length); return; }
+    body.files[GH_FILE] = { content: payload };
+    var info = { raw:rawLen, sent:len, inc:inc, gz:(payload!==txt) };
+    if(!CLOUD.gistId){ cloudCreate(body, info); return; }
     /* 已經有 gist：先讀一次雲端時間，睇下係唔係另一部機改過而本機未下載 */
     cloudBusy('檢查雲端版本…');
     ghFetch('/gists/'+encodeURIComponent(CLOUD.gistId), null, function(err, json){
@@ -6736,11 +6842,18 @@ function cloudUpload(){
         }
       }
       cloudBusy('上傳中…');
-      cloudPatch(body, txt.length);
+      cloudPatch(body, info);
     });
   });
 }
-function cloudCreate(body, size){
+/* 上傳成功之後嘅一句總結：講清楚有冇壓縮、有冇去相片、實際幾大 */
+function upMsg(info, extra){
+  var s = '✅ 已上傳，實際 '+fmtSize(info.sent);
+  if(info.gz) s += '（壓縮前 '+fmtSize(info.raw)+'）';
+  if(!info.inc) s += '　·　唔包含日記相片';
+  return s + (extra||'');
+}
+function cloudCreate(body, info){
   ghFetch('/gists', { method:'POST', body:body }, function(err, json){
     CLOUD_BUSY=false;
     if(err){ cloudMsg('❌ '+esc(err),'err'); alert('建立 gist 失敗：\n'+err); return; }
@@ -6748,18 +6861,18 @@ function cloudCreate(body, size){
     CLOUD.lastUp = new Date().toISOString();
     var url = (json && json.html_url) ? json.html_url : '';
     cloudSave(); drawSettings();
-    cloudMsg('✅ 已上傳（開咗個新嘅私密 gist），'+fmtSize(size)+
+    cloudMsg(upMsg(info, '（開咗個新嘅私密 gist）')+
              (url ? '<br>'+esc(url)+'　→ 另一部機貼呢條 link 就得' : ''),'ok');
   });
 }
-function cloudPatch(body, size){
+function cloudPatch(body, info){
   ghFetch('/gists/'+encodeURIComponent(CLOUD.gistId), { method:'PATCH', body:body },
   function(err, json){
     CLOUD_BUSY=false;
     if(err){ cloudMsg('❌ '+esc(err),'err'); alert('上傳失敗：\n'+err); return; }
     CLOUD.lastUp = new Date().toISOString();
     cloudSave(); drawSettings();
-    cloudMsg('✅ 已上傳，'+fmtSize(size)+'。','ok');
+    cloudMsg(upMsg(info)+'。','ok');
   });
 }
 function cloudDownload(){
@@ -6785,19 +6898,31 @@ function cloudDownload(){
     if(f.truncated){
       cloudMsg('❌ 雲端檔案太大，API 截斷咗','err');
       alert('雲端檔案超過 1 MB，GitHub API 只回傳部分內容，唔敢用。\n\n'+
-            '請去另一部機閂掉「包含日記相片」，重新上傳一次。');
+            '呢個通常係舊版本（未支援壓縮）上傳嘅檔案。\n'+
+            '解決：喺有相片嗰部機關掉「包含日記相片」，重新上傳一次——\n'+
+            '新版本會自動先用 gzip 壓縮，一般細 3–5 倍。');
       return;
     }
-    var pack;
-    try{ pack = JSON.parse(f.content); }
-    catch(e){ cloudMsg('❌ 雲端內容唔係有效嘅 JSON','err'); alert('雲端內容解析失敗，可能上傳途中出錯。'); return; }
-    /* applyPack 會列出內容再確認，然後套用；成功就記低今次下載時間 */
-    if(applyPack(pack)===true){
-      CLOUD.lastDown = new Date().toISOString();
-      cloudSave();
-    } else {
-      cloudMsg('已取消下載。');
-    }
+    /* 新版本係 gzip 壓縮過嘅；舊版本係純 JSON。gzUnpack 兩者都食。 */
+    cloudBusy('解壓中…');
+    gzUnpack(f.content).then(function(raw){
+      CLOUD_BUSY=false;
+      var pack;
+      try{ pack = JSON.parse(raw); }
+      catch(e){ cloudMsg('❌ 雲端內容唔係有效嘅 JSON','err'); alert('雲端內容解析失敗，可能上傳途中出錯。'); return; }
+      /* applyPack 會列出內容再確認，然後套用；成功就記低今次下載時間 */
+      if(applyPack(pack)===true){
+        CLOUD.lastDown = new Date().toISOString();
+        cloudSave();
+      } else {
+        cloudMsg('已取消下載。');
+      }
+    }).catch(function(e){
+      CLOUD_BUSY=false;
+      var m = (typeof e==='string') ? e : ('解壓失敗：'+(e&&e.message?e.message:e));
+      cloudMsg('❌ '+esc(m),'err');
+      alert(m);
+    });
   });
 }
 function cloudForget(){
@@ -6815,7 +6940,14 @@ function cloudFieldHtml(){
     '<input type="text" class="clin" id="clGist" autocomplete="off" spellcheck="false" '+
     'placeholder="Gist ID 或 gist 網址（留空＝第一次上傳時自動開一個）" value="'+esc(CLOUD.gistId)+'">'+
     '<label class="cpchk" style="margin-top:10px"><input type="checkbox" id="clInc"'+
-      (CLOUD.inc?' checked':'')+'>包含日記相片（會好大，多數唔需要）</label>'+
+      (CLOUD.inc?' checked':'')+'>包含日記相片'+
+      '<span class="clnote">相片已經係壓縮 JPEG，gzip 幫唔到太多；'+
+      '要同步相片就建議兩部機都用 Wi-Fi。</span></label>'+
+    '<div class="clsz" id="clSize">'+
+      (gzSupported()
+        ? '☁️ 上傳前會自動用 gzip 壓縮（一般細 3–5 倍），過大亦會自動略去相片。'
+        : '⚠️ 呢個瀏覽器唔支援壓縮；如果份資料過大，上傳時會自動略去日記相片。')+
+    '</div>'+
     '<div class="cprow" style="margin-top:11px">'+
       '<button class="btn pri" id="clUp">上傳到雲端</button>'+
       '<button class="btn" id="clDown">從雲端下載</button>'+
@@ -6852,9 +6984,35 @@ function cloudFieldHtml(){
     '</div></details></div>';
   return s;
 }
+/* 設定頁一開就估一次大小，等用戶未撳之前就知大概幾大。
+   相片要 async 讀 IndexedDB，所以先出「唔包相片」嘅底數，讀到再更新。 */
+function cloudSizeHint(){
+  var el=document.getElementById('clSize'); if(!el) return;
+  function paint(rawLen, realComp, photoNote){
+    if(!rawLen){ el.textContent = gzSupported()
+      ? '☁️ 上傳前會自動用 gzip 壓縮（一般細 3–5 倍），過大亦會自動略去相片。'
+      : '⚠️ 呢個瀏覽器唔支援壓縮；如果份資料過大，上傳時會自動略去日記相片。';
+      return; }
+    var head = '☁️ 大概 <b>'+fmtSize(rawLen)+'</b>';
+    if(gzSupported() && realComp) head += '，壓縮後約 <b>'+fmtSize(realComp)+'</b>';
+    else if(gzSupported()) head += '（上傳前會壓縮）';
+    el.innerHTML = head + (photoNote||'') +
+      (rawLen>CLOUD_MAX ? '<br>⚠️ 已經接近或超過 1 MB，上傳時會自動略去日記相片。' : '');
+  }
+  /* 底數：唔包相片 */
+  var base = JSON.stringify(buildPackObj([], false)).length;
+  paint(base, 0, '　（唔包相片）');
+  idbAll(function(photos){
+    var txt = JSON.stringify(buildPackObj(photos, CLOUD.inc));
+    gzPack(txt, function(e, payload){
+      /* payload===txt 代表冇壓縮（唔支援／壓唔到），咁就只報原始大小 */
+      var comp = (payload && payload!==txt) ? payload.length : 0;
+      paint(txt.length, comp, CLOUD.inc ? '　（包含相片）' : '　（唔包相片）');
+    });
+  });
+}
 /* ---------- 複製備份文字 ---------- */
-function cpPanel(){
-  if(SET_PANEL==='copy'){
+function cpPanel(){  if(SET_PANEL==='copy'){
     return '<div class="cpbox">'+
       '<label class="cpchk"><input type="checkbox" id="cpInc"'+(CP_INC?' checked':'')+'>'+
       '包含日記相片</label>'+
@@ -7181,7 +7339,8 @@ function drawSettings(){
     CLOUD.gistId=ghGistId(this.value); this.value=CLOUD.gistId; cloudSave();
   });
   var clIc=document.getElementById('clInc');
-  if(clIc) clIc.addEventListener('change',function(){ CLOUD.inc=!!this.checked; cloudSave(); });
+  if(clIc) clIc.addEventListener('change',function(){ CLOUD.inc=!!this.checked; cloudSave(); cloudSizeHint(); });
+  cloudSizeHint();
   /* App 更新（由 PWA 段落提供，設定頁只負責擺位） */
   if(window.__upd) window.__upd.bind();
   /* 每星期溫書下限（小時 → 分鐘）。打字即刻更新，離開欄位才正規化顯示。 */
@@ -7426,7 +7585,7 @@ window.addEventListener('focus',function(){
 
   var isFile = location.protocol === 'file:';
   /* 呢個常數要同 sw.js 嘅 VERSION 一致；設定頁靠對比兩者判斷有冇新版 */
-  var APP_VER = 'v42';
+  var APP_VER = 'v43';
   var ua = navigator.userAgent || '';
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
                    || window.navigator.standalone === true;
