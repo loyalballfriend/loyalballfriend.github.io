@@ -6862,16 +6862,27 @@ function uploadWith(photos, inc, alreadyRetried){
     }
     var body = { description:'時間表備份（自動同步用）', files:{} };
     body.files[GH_FILE] = { content: payload };
-    /* 相片：只在用戶勾咗「包含日記相片」時才上傳 */
-    var phCount = 0;
+    /* 相片：只在用戶勾咗「包含日記相片」時才上傳。
+       ⚠️ Gist 有個獨立限制：每個 gist 最多 300 個檔案（唔係 300 MB，係 300 個）。
+          所以相片數要封頂，唔係 PATCH 會直接失敗。
+          文字檔佔 1 個，所以相片最多 299 張。 */
+    var PH_MAX = 299;
+    var phCount = 0, phSkipped = 0;
     if(inc){
-      (photos||[]).forEach(function(rec){
-        if(!rec || !rec.id || !rec.src) return;
+      var usable = (photos||[]).filter(function(rec){ return rec && rec.id && rec.src; });
+      phSkipped = Math.max(0, usable.length - PH_MAX);
+      usable.slice(0, PH_MAX).forEach(function(rec){
         body.files[phFileOf(rec.id)] = { content: phPayload(rec.src) };
         phCount++;
       });
+      if(phSkipped && !alreadyRetried){
+        /* 唔靜靜哋略過：講清楚，等用戶知點解有啲相冇上到 */
+        cloudMsg('⚠️ 相片有 '+usable.length+' 張，超過 gist 上限 299 張，'+
+                 '今次只同步頭 '+PH_MAX+' 張。');
+      }
     }
-    var info = { raw:rawLen, sent:len, inc:inc, gz:(payload!==txt), photos:phCount };
+    var info = { raw:rawLen, sent:len, inc:inc, gz:(payload!==txt),
+                 photos:phCount, skipped:phSkipped };
     var go = function(){ cloudBusy(phCount ? ('上傳中…（'+phCount+' 張相片）') : '上傳中…'); };
     if(!CLOUD.gistId){ go(); cloudCreate(body, info); return; }
     /* 已經有 gist：先讀一次雲端時間，睇下係唔係另一部機改過而本機未下載 */
@@ -6905,6 +6916,7 @@ function upMsg(info, extra){
   if(info.gz) s += '（壓縮前 '+fmtSize(info.raw)+'）';
   if(info.inc && info.photos) s += '　·　相片 '+info.photos+' 張';
   else if(!info.inc) s += '　·　唔包含日記相片';
+  if(info.skipped) s += '（另有 '+info.skipped+' 張因超過 gist 檔數上限冇同步）';
   return s + (extra||'');
 }
 function cloudCreate(body, info){
@@ -6944,11 +6956,15 @@ function cloudDownload(){
     if(err){ CLOUD_BUSY=false; cloudMsg('❌ '+esc(err),'err'); alert('讀取雲端失敗：\n'+err); return; }
     var f = (json && json.files) ? json.files[GH_FILE] : null;
     if(!f || typeof f.content!=='string'){
+      CLOUD_BUSY=false;
       cloudMsg('❌ 雲端 gist 入面搵唔到 '+GH_FILE,'err');
       alert('呢個 gist 入面冇「'+GH_FILE+'」。\n可能係填錯咗 gist id，或者嗰個 gist 唔係本 App 開嘅。');
       return;
     }
     if(f.truncated){
+      /* ⚠️ 一定要清 CLOUD_BUSY：唔係嘅話 App 會永遠卡住「仲喺處理緊」，
+         之後撳咩掣都話「仲喺處理緊」，用戶要重開 App 先得。 */
+      CLOUD_BUSY=false;
       cloudMsg('❌ 雲端文字檔太大，API 截斷咗','err');
       alert('雲端嘅 '+GH_FILE+' 超過 1 MB，GitHub API 只回傳部分內容，唔敢用。\n\n'+
             '呢個通常係舊版本（未支援壓縮）上傳嘅檔案。\n'+
@@ -7046,12 +7062,10 @@ function cloudFieldHtml(){
     'placeholder="Gist ID 或 gist 網址（留空＝第一次上傳時自動開一個）" value="'+esc(CLOUD.gistId)+'">'+
     '<label class="cpchk" style="margin-top:10px"><input type="checkbox" id="clInc"'+
       (CLOUD.inc?' checked':'')+'>包含日記相片'+
-      '<span class="clnote">相片已經係壓縮 JPEG，gzip 幫唔到太多；'+
-      '要同步相片就建議兩部機都用 Wi-Fi。</span></label>'+
+      '<span class="clnote">相片會每張獨立存放喺同一個 gist，唔受 1 MB 限制。'+
+      '第一次同步會耐啲，建議兩部機都用 Wi-Fi。</span></label>'+
     '<div class="clsz" id="clSize">'+
-      (gzSupported()
-        ? '☁️ 上傳前會自動用 gzip 壓縮（一般細 3–5 倍），過大亦會自動略去相片。'
-        : '⚠️ 呢個瀏覽器唔支援壓縮；如果份資料過大，上傳時會自動略去日記相片。')+
+      '☁️ 文字會自動用 gzip 壓縮；相片每張獨立存放，冇 1 MB 上限。'+
     '</div>'+
     '<div class="cprow" style="margin-top:11px">'+
       '<button class="btn pri" id="clUp">上傳到雲端</button>'+
@@ -7090,30 +7104,30 @@ function cloudFieldHtml(){
   return s;
 }
 /* 設定頁一開就估一次大小，等用戶未撳之前就知大概幾大。
-   相片要 async 讀 IndexedDB，所以先出「唔包相片」嘅底數，讀到再更新。 */
+   v44 起文字同相片分開計：文字走 timetable.json（要受 1 MB 讀取上限），
+   相片每張獨立成檔（冇上限），所以相片幾多都唔會影響文字大小。 */
 function cloudSizeHint(){
   var el=document.getElementById('clSize'); if(!el) return;
-  function paint(rawLen, realComp, photoNote){
-    if(!rawLen){ el.textContent = gzSupported()
-      ? '☁️ 上傳前會自動用 gzip 壓縮（一般細 3–5 倍），過大亦會自動略去相片。'
-      : '⚠️ 呢個瀏覽器唔支援壓縮；如果份資料過大，上傳時會自動略去日記相片。';
-      return; }
-    var head = '☁️ 大概 <b>'+fmtSize(rawLen)+'</b>';
-    if(gzSupported() && realComp) head += '，壓縮後約 <b>'+fmtSize(realComp)+'</b>';
-    else if(gzSupported()) head += '（上傳前會壓縮）';
-    el.innerHTML = head + (photoNote||'') +
-      (rawLen>CLOUD_MAX ? '<br>⚠️ 已經接近或超過 1 MB，上傳時會自動略去日記相片。' : '');
+  function paint(rawLen, realComp, phN, phBytes){
+    var head = '☁️ 文字大概 <b>'+fmtSize(rawLen)+'</b>';
+    if(realComp) head += '，壓縮後約 <b>'+fmtSize(realComp)+'</b>';
+    if(phN) head += '<br>相片 <b>'+phN+' 張</b>，約 <b>'+fmtSize(phBytes)+'</b>'+
+                    '（每張獨立存放，唔佔文字額度）';
+    else if(CLOUD.inc) head += '<br>暫時未有日記相片';
+    el.innerHTML = head +
+      (rawLen>CLOUD_MAX ? '<br>⚠️ 文字壓縮後仍然接近或超過 1 MB，'+
+                          '上傳後下載可能會被截斷，建議先匯出備份。' : '');
   }
-  /* 底數：唔包相片 */
+  /* 底數：先計文字部分（唔使等 IndexedDB） */
   var base = JSON.stringify(buildPackObj([], false)).length;
-  paint(base, 0, '　（唔包相片）');
+  gzPack(JSON.stringify(buildPackObj([], false)), function(e, pl){
+    paint(base, (pl && pl!==JSON.stringify(buildPackObj([], false))) ? pl.length : 0, 0, 0);
+  });
   idbAll(function(photos){
-    var txt = JSON.stringify(buildPackObj(photos, CLOUD.inc));
-    gzPack(txt, function(e, payload){
-      /* payload===txt 代表冇壓縮（唔支援／壓唔到），咁就只報原始大小 */
-      var comp = (payload && payload!==txt) ? payload.length : 0;
-      paint(txt.length, comp, CLOUD.inc ? '　（包含相片）' : '　（唔包相片）');
-    });
+    var n = (photos||[]).filter(function(p){ return p && p.id && p.src; }).length;
+    var bytes = 0;
+    (photos||[]).forEach(function(p){ if(p && p.src) bytes += String(p.src).length; });
+    paint(base, 0, CLOUD.inc ? n : 0, bytes);
   });
 }
 /* ---------- 複製備份文字 ---------- */
@@ -7690,7 +7704,7 @@ window.addEventListener('focus',function(){
 
   var isFile = location.protocol === 'file:';
   /* 呢個常數要同 sw.js 嘅 VERSION 一致；設定頁靠對比兩者判斷有冇新版 */
-  var APP_VER = 'v43';
+  var APP_VER = 'v44';
   var ua = navigator.userAgent || '';
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
                    || window.navigator.standalone === true;
