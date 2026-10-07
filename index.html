@@ -87,7 +87,11 @@
        padding:4px 11px;border-radius:999px;opacity:0;transition:opacity .3s;white-space:nowrap}
   .tip.on{opacity:1}
 
-  /* ---------- 左右滑動切換檢視（滑入動畫） ---------- */
+  /* ---------- 左右滑動切換檢視（滑入動畫） ----------
+     主路徑用 Web Animations API（見 swipeAnim），下面嘅 keyframes 只係舊瀏覽器後備。
+     .swiping 係動畫期間嘅提示，令瀏覽器提早把張卡提上獨立合成層：
+     之後每一格都只係改 transform／opacity，唔使重畫，主執行緒忙都照跑 60fps。 */
+  .card.swiping{will-change:transform,opacity;backface-visibility:hidden}
   @keyframes swInNext{from{opacity:.4;transform:translateX(32px)}to{opacity:1;transform:none}}
   @keyframes swInPrev{from{opacity:.4;transform:translateX(-32px)}to{opacity:1;transform:none}}
   .card.swin-next{animation:swInNext .24s cubic-bezier(.22,.61,.36,1)}
@@ -4151,13 +4155,10 @@ function deadlineForm(d){
 
 /* ================= 重繪 ================= */
 function refreshAll(){
-  if(S.view==='week') drawWeek();
-  else if(S.view==='month') drawMonths();
-  drawTodo();
-  drawCountdown();
-  drawGrades();
-  drawGpa();
-  drawDiary();
+  /* 只畫「現時見到嘅」檢視 —— 其餘嘅等 setView() 切過去先畫。
+     以前啟動時一次過畫齊 7 個（隱藏嗰啲根本冇人睇），白白拖慢開 App。
+     所有 draw 函式都唔讀版面尺寸，所以延後畫完全冇副作用。 */
+  renderView(S.view);
   drawList();
   var sel=document.getElementById('jump'); if(sel) sel.value=S.weekIdx;
   var ts=document.getElementById('termSel'); if(ts) ts.value=String(S.termIdx);
@@ -4172,22 +4173,9 @@ var VIEW_CARD={week:'weekCard',month:'monthCard',todo:'todoCard',countdown:'cdCa
 var VIEW_BTN={week:'vWeek',month:'vMonth',todo:'vTodo',countdown:'vCd',
               grade:'vGrade',gpa:'vGpa',diary:'vDiary'};
 
-/* 滑入動畫：dir>0 = 睇下一個（由右邊入），dir<0 = 睇上一個（由左邊入） */
-function swipeAnim(cardId,dir){
-  var el=document.getElementById(cardId); if(!el) return;
-  el.classList.remove('swin-next','swin-prev');
-  void el.offsetWidth;                 /* 強制 reflow，令同一組 class 可以連續觸發 */
-  el.classList.add(dir>0?'swin-next':'swin-prev');
-  clearTimeout(el.__swT);
-  el.__swT=setTimeout(function(){ el.classList.remove('swin-next','swin-prev'); },600);
-}
-
-function setView(v,dir){
-  S.view=v;
-  VIEW_ORDER.forEach(function(k){
-    var c=document.getElementById(VIEW_CARD[k]); if(c) c.hidden=(k!==v);
-    var b=document.getElementById(VIEW_BTN[k]); if(b) b.classList.toggle('on',k===v);
-  });
+/* 畫一個檢視。呼叫時張卡可以係 hidden —— 所有 draw 函式都唔會讀版面尺寸，
+   所以「先畫好、後顯示」係安全嘅，而且只會觸發一次 layout。 */
+function renderView(v){
   if(v==='week') drawWeek();
   else if(v==='month') drawMonths();
   else if(v==='todo') drawTodo();
@@ -4195,6 +4183,54 @@ function setView(v,dir){
   else if(v==='gpa') drawGpa();
   else if(v==='diary') drawDiary();
   else drawGrades();
+}
+
+/* 滑入動畫：dir>0 = 睇下一個（由右邊入），dir<0 = 睇上一個（由左邊入）
+   用 Web Animations API 而唔係加 CSS class —— 唔使 void offsetWidth 強制重排，
+   而且 transform／opacity 動畫會交由合成器（compositor）行，主執行緒塞車都唔會掉格。 */
+var SW_ANIM=null, SW_ANIM_EL=null;
+function swipeAnim(cardId,dir){
+  var el=document.getElementById(cardId); if(!el) return;
+  if(SW_ANIM && SW_ANIM_EL!==el){ try{ SW_ANIM.cancel(); }catch(e){} SW_ANIM=null; }
+  var dx = dir>0 ? 34 : -34;
+
+  if(el.animate){
+    try{ if(SW_ANIM) SW_ANIM.cancel(); }catch(e){}
+    el.classList.add('swiping');                 /* will-change：提佢上獨立合成層 */
+    SW_ANIM = el.animate(
+      [ { opacity:0.35, transform:'translate3d('+dx+'px,0,0)' },
+        { opacity:1,    transform:'translate3d(0,0,0)' } ],
+      { duration:240, easing:'cubic-bezier(.22,.61,.36,1)', fill:'none' }
+    );
+    SW_ANIM_EL = el;
+    var done=function(){
+      if(SW_ANIM_EL===el) SW_ANIM=null;
+      clearTimeout(el.__swT);
+      el.__swT=setTimeout(function(){ el.classList.remove('swiping'); },120);
+    };
+    try{ SW_ANIM.onfinish=done; SW_ANIM.oncancel=done; }
+    catch(e){ setTimeout(done,260); }
+    return;
+  }
+
+  /* 後備：唔支援 WAAPI 嘅舊瀏覽器，用返 CSS class + 強制 reflow */
+  el.classList.remove('swin-next','swin-prev');
+  void el.offsetWidth;
+  el.classList.add(dir>0?'swin-next':'swin-prev');
+  clearTimeout(el.__swT);
+  el.__swT=setTimeout(function(){ el.classList.remove('swin-next','swin-prev'); },600);
+}
+
+function setView(v,dir){
+  S.view=v;
+  /* 1) 先畫好目標檢視 —— 佢而家仲係 hidden，唔會觸發 layout */
+  renderView(v);
+  /* 2) 再一次過切換可見性（連同工具列按鈕） */
+  VIEW_ORDER.forEach(function(k){
+    var c=document.getElementById(VIEW_CARD[k]); if(c) c.hidden=(k!==v);
+    var b=document.getElementById(VIEW_BTN[k]); if(b) b.classList.toggle('on',k===v);
+  });
+  /* 3) 最後才落動畫 */
   if(dir) swipeAnim(VIEW_CARD[v],dir);
   save();
 }
@@ -5459,7 +5495,7 @@ window.addEventListener('focus',function(){
 
   var isFile = location.protocol === 'file:';
   /* 呢個常數要同 sw.js 嘅 VERSION 一致；設定頁靠對比兩者判斷有冇新版 */
-  var APP_VER = 'v35';
+  var APP_VER = 'v36';
   var ua = navigator.userAgent || '';
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
                    || window.navigator.standalone === true;
@@ -5525,13 +5561,32 @@ window.addEventListener('focus',function(){
     location.reload();
   }
 
+  /* 導航係 cache-first：唔清走舊 HTML 嘅話，reload 只會拿返舊版，
+     更新就會「撳完好似冇反應」。所以一定要先清，清完才 reload。 */
+  function purgeShell(){
+    try{
+      if(!window.caches || !caches.keys) return Promise.resolve();
+      return caches.keys().then(function(ks){
+        return Promise.all(ks.map(function(k){
+          return caches.open(k).then(function(c){
+            return Promise.all(['./','./index.html'].map(function(u){
+              return c.delete(u).catch(function(){});
+            }));
+          }).catch(function(){});
+        }));
+      }).catch(function(){});
+    }catch(e){ return Promise.resolve(); }
+  }
+
   function applyUpdate(){
     updApplying = true;
-    var sw = swReg && (swReg.waiting || swReg.active);
-    try{ if(sw) sw.postMessage('skip-waiting'); }catch(e){}
     updMsg('更新緊，畫面會自動重新載入…', 'ok');
-    /* controllerchange 冇 fire 都照 reload（導航係 network-first，一定拿到新 HTML） */
-    setTimeout(doReload, 900);
+    purgeShell().then(function(){
+      var sw = swReg && (swReg.waiting || swReg.active);
+      try{ if(sw) sw.postMessage('skip-waiting'); }catch(e){}
+      /* controllerchange 冇 fire 都照 reload（快取已清，導航一定上網拿新 HTML） */
+      setTimeout(doReload, 700);
+    });
   }
 
   function showUpdateBar(){
