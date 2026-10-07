@@ -154,8 +154,42 @@
   .wkstudy .ws-hint{margin-top:8px;font-size:11.5px;color:var(--muted);line-height:1.6}
   .wkstudy .ws-rec{margin-left:9px;padding:4px 12px;font-size:12px;flex:0 0 auto}
   .wkstudy .ws-split{margin-top:7px;font-size:11.5px;color:var(--muted)}
+  /* 連續溫書日數 */
+  .wkstudy .ws-streak{font-size:11.5px;font-weight:600;border-radius:20px;padding:3px 10px;
+                      white-space:nowrap;background:#eef2ff;color:#4a5a8a}
+  .wkstudy .ws-streak b{font-variant-numeric:tabular-nums;color:#2f3d6b}
+  /* 分科拆帳 */
+  .wkstudy .ws-subj{margin-top:9px;border-top:1px dashed var(--line2);padding-top:9px}
+  .wkstudy .ws-subj-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .wkstudy .ws-subj-lbl{font-size:12px;font-weight:700;color:#7b8699;letter-spacing:.4px}
+  .wkstudy .ws-seg{display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+  .wkstudy .ws-seg button{appearance:none;border:0;background:transparent;font:inherit;
+    font-size:11.5px;color:var(--muted);padding:3px 9px;cursor:pointer}
+  .wkstudy .ws-seg button.on{background:var(--accent);color:#fff}
+  .wkstudy .ws-subj-tot{margin-left:auto;font-size:11.5px;color:var(--muted);
+    font-variant-numeric:tabular-nums}
+  .wkstudy .ws-subj-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .wkstudy .ws-schip{display:flex;align-items:center;gap:6px;background:#fff;
+    border:1px solid var(--line2);border-radius:9px;padding:4px 8px;font-size:11.5px;max-width:100%}
+  .wkstudy .ws-schip b{font-weight:600;white-space:nowrap;overflow:hidden;
+    text-overflow:ellipsis;max-width:118px}
+  .wkstudy .ws-schip i{font-style:normal;color:#7b8699;font-variant-numeric:tabular-nums}
+  .wkstudy .ws-schip.none{border-style:dashed}
+  .wkstudy .ws-schip.none b{color:#7b8699;font-weight:500}
+  .wkstudy .ws-sbar{display:inline-block;width:42px;height:5px;border-radius:20px;
+    background:#e8ecf4;overflow:hidden;flex:0 0 auto}
+  .wkstudy .ws-sbar em{display:block;height:100%;background:var(--accent);border-radius:20px}
+  .wkstudy .ws-schip.none .ws-sbar em{background:#b3bccb}
+  .wkstudy .ws-smore{font-size:11.5px;color:var(--muted);align-self:center}
+  html[data-theme="dark"] .wkstudy .ws-streak{background:#232b40;color:#a9b6dd}
+  html[data-theme="dark"] .wkstudy .ws-streak b{color:#dbe3ff}
+  html[data-theme="dark"] .wkstudy .ws-schip{background:#1b2130;border-color:#2c3446}
+  html[data-theme="dark"] .wkstudy .ws-sbar{background:#2a3244}
+  html[data-theme="dark"] .wkstudy .ws-schip.none .ws-sbar em{background:#5a6478}
+  html[data-theme="dark"] .wkstudy .ws-seg{border-color:#2c3446}
   /* 本週溫書記錄對話框 */
-  .lgrow{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--line)}
+  .lgrow{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--line);
+         flex-wrap:wrap}
   .lgrow:last-of-type{border-bottom:none}
   .lgrow.today{background:var(--accent-soft);border-radius:8px;padding-left:8px;padding-right:8px}
   .lgd{flex:1;min-width:0;font-size:13.5px;font-weight:500;color:var(--text)}
@@ -168,6 +202,12 @@
   .lgu{flex:0 0 auto;font-size:12.5px;color:var(--muted)}
   .lgnote{margin:-3px 0 7px 0;font-size:11.5px;color:#0f766e;background:#eefaf8;
           border:1px solid #cdeee9;border-radius:8px;padding:5px 9px;line-height:1.5}
+  /* 分科下拉：獨立一行，唔會逼走原本嘅小時／分鐘輸入框 */
+  .lgsubj{flex:1 1 100%;margin-top:6px;padding:7px 8px;border:1px solid var(--line2);
+          border-radius:9px;font:inherit;font-size:12.5px;background:#fff;color:var(--text);
+          max-width:100%}
+  .lgsubj:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  html[data-theme="dark"] .lgsubj{background:#12171f;color:var(--text)}
   html[data-theme="dark"] .lgnote{color:#9FE3DD;background:#11302e;border-color:#1d4a46}
   .lgtot{margin-top:11px;padding:9px 11px;background:#f7f9fd;border:1px solid var(--line);
          border-radius:10px;font-size:13px;color:var(--muted);text-align:center}
@@ -258,6 +298,46 @@
   .tmresult{margin-top:12px;padding:11px 12px;border-radius:10px;background:#e6f6ee;
             color:#0f6e56;font-size:13px;line-height:1.7;text-align:center}
   .tmresult .tmsub{font-size:12px;color:#3f8a72}
+  /* 計時模式切換（自由／番茄） */
+  .tmmode{display:flex;border:1px solid var(--line2);border-radius:10px;overflow:hidden;
+          margin-bottom:12px}
+  .tmmode .tmm{flex:1;appearance:none;border:0;background:transparent;font:inherit;
+    font-size:12.5px;font-weight:500;color:var(--muted);padding:8px 6px;cursor:pointer}
+  .tmmode .tmm.on{background:var(--accent);color:#fff}
+  /* 番茄鐘條 */
+  .pomo{border:1px solid var(--line2);border-radius:11px;padding:10px 11px;margin-bottom:12px;
+        background:#f7f9fd}
+  .pomo-top{display:flex;align-items:center;gap:8px}
+  .pomo-ph{font-size:11.5px;font-weight:700;border-radius:20px;padding:3px 9px;white-space:nowrap}
+  .pomo-ph.work{background:#fde8e6;color:#a32d2d}
+  .pomo-ph.rest{background:#e6f6ee;color:#0f6e56}
+  .pomo-left{margin-left:auto;font-size:19px;font-weight:700;color:var(--text);
+             font-variant-numeric:tabular-nums}
+  .pomo-dots{display:flex;gap:4px;align-items:center;flex:0 0 auto}
+  .pomo-dots i{width:8px;height:8px;border-radius:50%;background:#d8deea;display:block}
+  .pomo-dots i.on{background:var(--accent)}
+  .pomo-sub{margin-top:7px;font-size:11.5px;color:var(--muted);line-height:1.6}
+  .pomo-sub b{color:var(--accent)}
+  .pomo-set{display:flex;flex-wrap:wrap;gap:9px;margin-top:9px;
+            border-top:1px dashed var(--line2);padding-top:9px}
+  .pomo-set label{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--muted)}
+  .pomo-set input{width:48px;padding:5px 4px;border:1px solid var(--line2);border-radius:8px;
+    font:inherit;font-size:12px;text-align:center;background:#fff;color:var(--text)}
+  /* 計時器：溫書科目 */
+  .tmsubjrow{display:flex;align-items:center;gap:9px;margin:12px 0 10px}
+  .tmsubjrow .tslbl{font-size:12px;font-weight:600;color:#7b8699;white-space:nowrap}
+  .tmsubjrow .tsel{flex:1;min-width:0;padding:8px 9px;border:1px solid var(--line2);
+    border-radius:9px;font:inherit;font-size:13px;background:#fff;color:var(--text)}
+  .tmsubjrow .tsel:focus{outline:none;border-color:var(--accent);
+    box-shadow:0 0 0 3px var(--accent-soft)}
+  html[data-theme="dark"] .pomo{background:#1a2130}
+  html[data-theme="dark"] .pomo-set input,html[data-theme="dark"] .tmsubjrow .tsel{background:#131924}
+  html[data-theme="dark"] .pomo-dots i{background:#39435a}
+  /* ⚠️ 呢條一定要有：上面嘅深色規則帶咗 [data-theme] 屬性，權重係 (0,2,2)，
+     會壓過 `.pomo-dots i.on` (0,2,1) —— 唔補返就會見到 4 粒點全部灰晒，
+     明明完成咗都冇反應。 */
+  html[data-theme="dark"] .pomo-dots i.on{background:var(--accent)}
+  html[data-theme="dark"] .tmmode{border-color:#2c3446}
   .btn.rec{background:var(--accent);color:#fff;border-color:var(--accent);
            font-variant-numeric:tabular-nums}
   html[data-theme="dark"] .tmclock.pause{color:#efb45a}
@@ -1675,7 +1755,11 @@ var S = {
   timerAcc:0,         /* 溫書計時器：之前幾段累計嘅毫秒（暫停時保留） */
   timerDay:null,      /* 溫書計時器：今次係邊日開始（'YYYY-MM-DD'） */
   timerFrom:null,     /* 溫書計時器：今次「第一次撳開始」嘅時間戳；暫停／繼續都唔會變 */
-  studySessions:[],   /* 計時器記錄嘅溫書時段：{id, d:'YYYY-MM-DD', s:'HH:MM', e:'HH:MM', m:分鐘} */
+  studySessions:[],   /* 計時器記錄嘅溫書時段：{id, d:'YYYY-MM-DD', s:'HH:MM', e:'HH:MM', m:分鐘, subj:'科目'} */
+  studySubj:{},       /* 分科溫書：{ 'YYYY-MM-DD': { '科目': 分鐘 } }。studyLog 仍然係總數來源 */
+  timerSubj:'',       /* 計時器而家揀緊嘅科目；記錄時寫入 studySubj 同 session */
+  pomo:{on:false,work:25,brk:5,long:15,every:4,round:0,phase:'work',base:0,ms:0},
+  pomoDone:{},        /* { 'YYYY-MM-DD': 完成咗幾多輪專注 } */
   acts:[],            /* 非溫書時間記錄：{id, d:'YYYY-MM-DD', s:'HH:MM', e:'HH:MM', m:分鐘, label:'做咩'} */
   terms:null,         /* 學期：{id, name, start:'YYYY-MM-DD', weeks}；null = 用預設 */
   termIdx:0,          /* 而家睇緊邊個學期 */
@@ -1707,6 +1791,10 @@ function load(){
     if(typeof d.timerAcc==='number'&&d.timerAcc>0) S.timerAcc=d.timerAcc;
     if(typeof d.timerDay==='string') S.timerDay=d.timerDay;
     if(typeof d.timerFrom==='number'&&d.timerFrom>0) S.timerFrom=d.timerFrom;
+    if(d.studySubj&&typeof d.studySubj==='object') S.studySubj=d.studySubj;
+    if(typeof d.timerSubj==='string') S.timerSubj=d.timerSubj;
+    if(d.pomo&&typeof d.pomo==='object') S.pomo=Object.assign({},S.pomo,d.pomo);
+    if(d.pomoDone&&typeof d.pomoDone==='object') S.pomoDone=d.pomoDone;
     if(Array.isArray(d.studySessions)) S.studySessions=d.studySessions;
     if(Array.isArray(d.acts)) S.acts=d.acts;
     if(Array.isArray(d.terms)&&d.terms.length) S.terms=d.terms;
@@ -1820,6 +1908,119 @@ function makeSession(fromTs,toTs,day,mins){
   if(s2m(e)<=s2m(s)) e=m2s(Math.min(s2m(s)+1,1439));
   return { id:uid(), d:day, s:s, e:e, m:mins };
 }
+/* ---------- 分科溫書（v41） ----------
+   點解要另開一個 studySubj，而唔係將 studyLog 改成 {科目: 分鐘}：
+   studyLog 係「每日總數」，已經有好多地方（週達標、月總覽、備份、雲端同步）
+   依賴佢係一個 number。改結構會拖冧舊資料同舊備份。所以兩個並行：
+     studyLog[day]              = 當日總分鐘（唯一嘅總數來源，唔變）
+     studySubj[day][科目]        = 分科拆帳
+   舊資料（只有 studyLog、冇 studySubj）一律當「未指定」，唔會消失。
+   唔變嘅不變量：sum(studySubj[day]) <= studyLog[day]，差額 = 未指定。 */
+function normSubj(s){ return String(s==null?'':s).trim().replace(/\s+/g,' ').slice(0,40); }
+var SUBJ_NONE='未指定';
+var SUBJ_SCOPE='week';   /* 分科拆帳嘅範圍：'week' | 'all'（只係顯示狀態，唔入 S） */
+function subjDayMap(ds){
+  var m=S.studySubj ? S.studySubj[ds] : null;
+  return (m&&typeof m==='object') ? m : {};
+}
+/* 加一筆分科時數（計時器記錄時用） */
+function subjAdd(ds,subj,mins){
+  var m=Math.round(mins);
+  if(!(m>0)) return;
+  if(!S.studySubj||typeof S.studySubj!=='object') S.studySubj={};
+  var day=S.studySubj[ds];
+  if(!day||typeof day!=='object'){ day={}; S.studySubj[ds]=day; }
+  var k=normSubj(subj)||SUBJ_NONE;
+  day[k]=(typeof day[k]==='number'?day[k]:0)+m;
+}
+/* 當日最主要嘅科目（用嚟預填表單，避免一儲存就抹走計時器標嘅科） */
+function daySubj(ds){
+  var m=subjDayMap(ds), best='', bn=-1;
+  Object.keys(m).forEach(function(k){ if(m[k]>bn){ bn=m[k]; best=k; } });
+  return best;
+}
+/* 某日嘅「有效溫書分鐘」：studyLog 優先，冇就用計時器時段加總。
+   兩者唔可以相加 —— stopTimer 會同時寫入兩邊，相加會重複計。 */
+function studyMinOfDay(ds){
+  var a=logMin(ds);
+  return a>0 ? a : sessMin(ds);
+}
+/* 一組日子嘅分科統計。days = ['YYYY-MM-DD', …]
+   回傳 [{name, m, n}]，由多到少；未指定永遠排最後。 */
+function subjStatsOf(days){
+  var map={}, order=[];
+  (days||[]).forEach(function(ds){
+    var tagged=0, m=subjDayMap(ds);
+    Object.keys(m).forEach(function(k){
+      var v=m[k]; if(!(v>0)) return;
+      if(!map[k]){ map[k]={name:k,m:0,n:0}; order.push(k); }
+      map[k].m+=v; map[k].n++; tagged+=v;
+    });
+    /* 總數多過分科拆帳嘅部分 → 未指定（舊資料、或者手動填咗冇揀科） */
+    var rest=studyMinOfDay(ds)-tagged;
+    if(rest>0){
+      if(!map[SUBJ_NONE]){ map[SUBJ_NONE]={name:SUBJ_NONE,m:0,n:0}; order.push(SUBJ_NONE); }
+      map[SUBJ_NONE].m+=rest; map[SUBJ_NONE].n++;
+    }
+  });
+  order.sort(function(a,b){
+    if(a===SUBJ_NONE) return 1;                 /* 未指定一定排最後 */
+    if(b===SUBJ_NONE) return -1;
+    return map[b].m-map[a].m || (a<b?-1:(a>b?1:0));
+  });
+  var out=order.map(function(k){ return map[k]; });
+  var tot=out.reduce(function(t,x){ return t+x.m; },0);
+  return { list:out, total:tot,
+           named:out.filter(function(x){ return x.name!==SUBJ_NONE; }).length,
+           top:(out.length && out[0].name!==SUBJ_NONE) ? out[0] : null };
+}
+function weekDays(mon0){
+  var a=[];
+  for(var i=0;i<7;i++) a.push(ymd(addD(mon0,i)));
+  return a;
+}
+function subjStatsWeek(mon0){ return subjStatsOf(weekDays(mon0)); }
+function subjStatsAll(){
+  var seen={};
+  Object.keys(S.studyLog||{}).forEach(function(k){ seen[k]=1; });
+  Object.keys(S.studySubj||{}).forEach(function(k){ seen[k]=1; });
+  (S.studySessions||[]).forEach(function(x){ if(x&&x.d) seen[x.d]=1; });
+  return subjStatsOf(Object.keys(seen).sort());
+}
+/* 分科選項：成績頁加過嘅科目 + 課堂代號 + 已經用過嘅科目名，去重排序 */
+function subjOptions(){
+  var set={}, out=[];
+  function push(v){ var k=normSubj(v); if(k && !set[k]){ set[k]=1; out.push(k); } }
+  Object.keys(S.grades||{}).forEach(push);
+  (S.courses||[]).forEach(function(c){ push(c && c.code); });
+  Object.keys(S.studySubj||{}).forEach(function(ds){
+    Object.keys(subjDayMap(ds)).forEach(function(k){ if(k!==SUBJ_NONE) push(k); });
+  });
+  (S.studySessions||[]).forEach(function(x){ if(x&&x.subj) push(x.subj); });
+  out.sort(function(a,b){ return a<b?-1:(a>b?1:0); });
+  return out;
+}
+/* ---------- 連續溫書日數 ---------- */
+/* 今日仲未溫唔算斷纜（由琴日倒推），否則朝早一開 App 就會見到 0 日。 */
+function studyStreak(){
+  var GUARD=4000, cur=0;
+  var d=todayStr();
+  if(studyMinOfDay(d)<=0) d=ymd(addD(new Date(d+'T00:00:00'),-1));
+  while(cur<GUARD && studyMinOfDay(d)>0){
+    cur++; d=ymd(addD(new Date(d+'T00:00:00'),-1));
+  }
+  /* 史上最長：將有記錄嘅日子排序，睇最長連續段 */
+  var keys={};
+  Object.keys(S.studyLog||{}).forEach(function(k){ if(studyMinOfDay(k)>0) keys[k]=1; });
+  (S.studySessions||[]).forEach(function(x){ if(x&&x.d&&studyMinOfDay(x.d)>0) keys[x.d]=1; });
+  var sorted=Object.keys(keys).sort(), best=0, run=0, prev=null;
+  sorted.forEach(function(k){
+    run = (prev && k===ymd(addD(new Date(prev+'T00:00:00'),1))) ? run+1 : 1;
+    if(run>best) best=run;
+    prev=k;
+  });
+  return { cur:cur, best:Math.max(best,cur) };
+}
 /* ---------- 非溫書時間記錄（「做過咩」） ---------- */
 /* 每段：{id, d:'YYYY-MM-DD', s:'HH:MM', e:'HH:MM', m:分鐘, label:'做咩'} */
 function actsOn(ds){
@@ -1881,7 +2082,15 @@ function studyCls(tot,min){
 function drawStudy(mon0){
   var el=document.getElementById('wkStudy'); if(!el) return;
   var w=studyOfWeek(mon0);
-  if(!w.total && !w.min && !weekHasLog(mon0)){ el.hidden=true; el.innerHTML=''; return; }
+  var stk=studyStreak();
+  /* 冇本週數據通常收起 —— 唔想翻舊週／未來週時成日彈個 0 出嚟。
+     但「今日嗰個星期」例外：只要有溫書歷史就照顯示。
+     因為新一個星期仲未開始溫書時，正正最需要見到「連續 N 日」提醒自己唔好斷纜，
+     呢個時候收起就最冇用。 */
+  var thisWeek = ymd(mon0)===ymd(mon(new Date()));
+  if(!w.total && !w.min && !weekHasLog(mon0) && !(thisWeek && stk.best>0)){
+    el.hidden=true; el.innerHTML=''; return;
+  }
   el.hidden=false;
   var cls=studyCls(w.total,w.min);
   var h='<div class="ws-top"><span class="ws-lbl">本週溫書</span>'+
@@ -1893,6 +2102,12 @@ function drawStudy(mon0){
                        : '差 '+hTxt(w.min-w.total)+' 小時')+'</span>';
   } else {
     h+='<span class="ws-pill none">未設下限</span>';
+  }
+  /* 連續溫書日數：今日未溫唔算斷纜，所以朝早開 App 都唔會見到 0 */
+  if(stk.cur>0 || stk.best>0){
+    h+='<span class="ws-streak" title="連續溫書 '+stk.cur+' 日'+
+       (stk.best>stk.cur?('　·　最長紀錄 '+stk.best+' 日'):'　·　呢個就係你最長紀錄')+
+       '">連續 <b>'+stk.cur+'</b> 日</span>';
   }
   h+='<button class="btn ws-rec" id="wsRec">記錄</button></div>';
   if(w.min>0){
@@ -1918,9 +2133,40 @@ function drawStudy(mon0){
     }
     h+='</div>';
   }
+  /* 分科拆帳：本週／全部。舊資料冇分科就全部歸「未指定」，唔會消失。 */
+  var sk = SUBJ_SCOPE==='all' ? subjStatsAll() : subjStatsWeek(mon0);
+  if(sk.list.length){
+    h+='<div class="ws-subj"><div class="ws-subj-top">'+
+       '<span class="ws-subj-lbl">分科</span>'+
+       '<span class="ws-seg" id="wsSeg">'+
+         '<button type="button" data-scope="week"'+(SUBJ_SCOPE==='week'?' class="on"':'')+'>本週</button>'+
+         '<button type="button" data-scope="all"'+(SUBJ_SCOPE==='all'?' class="on"':'')+'>全部</button>'+
+       '</span>'+
+       '<span class="ws-subj-tot">'+hTxt(sk.total)+' 小時</span></div>'+
+       '<div class="ws-subj-list">';
+    sk.list.slice(0,6).forEach(function(x){
+      var pct=sk.total>0?Math.round(x.m/sk.total*100):0;
+      var isNone=(x.name===SUBJ_NONE);
+      h+='<span class="ws-schip'+(isNone?' none':'')+'" title="'+esc(x.name)+'：'+
+         hTxt(x.m)+' 小時（'+pct+'%'+(isNone?'，未揀科目嘅記錄':'')+'）">'+
+         '<b>'+esc(x.name)+'</b><i>'+hTxt(x.m)+'</i>'+
+         '<span class="ws-sbar"><em style="width:'+pct+'%"></em></span></span>';
+    });
+    if(sk.list.length>6) h+='<span class="ws-smore">＋'+(sk.list.length-6)+'</span>';
+    h+='</div></div>';
+  }
   el.innerHTML=h;
   var b=document.getElementById('wsRec');
   if(b) b.addEventListener('click',studyLogForm);
+  var seg=document.getElementById('wsSeg');
+  if(seg) seg.addEventListener('click',function(e){
+    var t=(e.target && e.target.closest) ? e.target.closest('[data-scope]') : null;
+    if(!t || !this.contains(t)) return;
+    var want=t.getAttribute('data-scope')==='all' ? 'all' : 'week';
+    if(want===SUBJ_SCOPE) return;
+    SUBJ_SCOPE=want;
+    drawStudy(mon0);
+  });
 }
 /* ---------- 本週「做過咩」摘要（非溫書時間） ---------- */
 function drawActs(mon0){
@@ -2079,6 +2325,19 @@ function actSave(){
   actForm(AK_DAY, null, true);   /* keepMsg：保留「已加入／已更新」提示 */
 }
 /* ---------- 本週溫書記錄（逐個星期填實際時數） ---------- */
+/* 分科下拉（表單用）：每日一個科目 */
+function subjSelHtml(cur,ds){
+  var opts=subjOptions();
+  var c=normSubj(cur);
+  if(c && c!==SUBJ_NONE && opts.indexOf(c)<0) opts.push(c);
+  opts.sort(function(a,b){ return a<b?-1:(a>b?1:0); });
+  var h='<select class="lgsubj" data-d="'+esc(ds)+'" title="呢日溫嘅科目（用嚟做分科統計）">'+
+        '<option value=""'+(c?'':' selected')+'>科目：未指定</option>';
+  opts.forEach(function(s){
+    h+='<option value="'+esc(s)+'"'+(s===c?' selected':'')+'>'+esc(s)+'</option>';
+  });
+  return h+'</select>';
+}
 function studyLogForm(){
   var mon0=curMon(), i, d, ds, l;
   if(!S.studyLog) S.studyLog={};
@@ -2087,7 +2346,9 @@ function studyLogForm(){
     '<br>只填「實際溫咗幾多個鐘」，唔使填開始／結束時間。<br>'+
     '唔夠一個鐘就填<b>分鐘</b>（例如 45 分）；分鐘填超過 59 會自動進位成小時。<br>'+
     '課表上已排定嘅溫書時段會另外自動加上去。<br>'+
-    '用「溫書計時」記錄嘅時數已經自動填咗，改上面個數會覆蓋佢。</div>';
+    '用「溫書計時」記錄嘅時數已經自動填咗，改上面個數會覆蓋佢。<br>'+
+    '下面可以順手揀<b>科目</b>，之後喺週視圖嘅溫書卡就睇得到<b>邊科溫得多</b>。'+
+    '唔揀就當「未指定」，唔會影響總數。</div>';
   for(i=0;i<7;i++){
     d=addD(mon0,i); ds=ymd(d); l=logMin(ds);
     var ses=sessOn(ds), sm=sessMin(ds);
@@ -2099,10 +2360,13 @@ function studyLogForm(){
        '<span class="lgin"><input type="number" class="lgmin" data-d="'+ds+'" min="0" max="59" '+
        'step="5" inputmode="numeric" value="'+(l%60||'')+'" placeholder="0">'+
        '<span class="lgu">分</span></span>'+
+       subjSelHtml(daySubj(ds),ds)+
        '</div>';
     if(sm>0){
       h+='<div class="lgnote">⏱ 計時器記錄咗 '+hTxt(sm)+' 小時'+
-         (ses.length?'（'+ses.map(function(x){ return x.s+'–'+x.e; }).join('、')+'）':'')+
+         (ses.length?'（'+ses.map(function(x){
+            return x.s+'–'+x.e+(x.subj&&x.subj!==SUBJ_NONE?' '+x.subj:'');
+         }).join('、')+'）':'')+
          '</div>';
     }
   }
@@ -2163,11 +2427,197 @@ function studyLogForm(){
   document.getElementById('lgSave').addEventListener('click',function(){
     var c=collect();
     /* 先清走本週舊記錄，再寫入新值（清空嘅日子就當冇記錄） */
-    for(var k=0;k<7;k++) delete S.studyLog[ymd(addD(mon0,k))];
+    for(var k=0;k<7;k++){
+      var dsk=ymd(addD(mon0,k));
+      delete S.studyLog[dsk];
+      if(S.studySubj) delete S.studySubj[dsk];
+    }
     Object.keys(c.map).forEach(function(ds){ S.studyLog[ds]=c.map[ds]; });
+    /* 分科：表單係「每日一個科目」，所以當日總數全歸嗰科；唔揀 = 未指定。
+       咁樣 sum(studySubj[day]) 一定等於 studyLog[day]，統計唔會對唔上。 */
+    rows.forEach(function(r){
+      var sel=r.querySelector('.lgsubj'); if(!sel) return;
+      var ds=sel.getAttribute('data-d'), mins=c.map[ds];
+      if(!(mins>0)) return;
+      if(!S.studySubj||typeof S.studySubj!=='object') S.studySubj={};
+      var m={}; m[normSubj(sel.value)||SUBJ_NONE]=mins;
+      S.studySubj[ds]=m;
+    });
     closeModal(); refreshAll();
   });
 }
+/* ---------- 番茄鐘（v41） ----------
+   設計取態：番茄鐘係「喺現有計時器上加一層節奏提示」，唔係另開一套計時。
+   階段長度係用 timerElapsed()（即真正計緊嘅毫秒）去度，所以：
+     · 暫停／繼續唔會打亂階段
+     · 離開 App、鎖屏、熄瀏覽器返嚟，會自動「追返」漏咗嘅階段
+   時數記錄方式完全不變 —— 停錶時照樣將本節總分鐘寫入 studyLog，
+   所以番茄模式同自由模式記出嚟嘅數係同一種數，統計唔會分岔。 */
+var POMO_PHASE={work:'專注',brk:'短休',long:'長休'};
+var POMO_DEF={work:25,brk:5,long:15,every:4};
+var POMO_FLASH=null, POMO_FLASH_T=null, POMO_CTX=null;
+function normPomo(p){
+  p=(p&&typeof p==='object')?p:{};
+  function num(v,d,lo,hi){ v=+v; return (isFinite(v)&&v>=lo&&v<=hi)?Math.round(v):d; }
+  var out={
+    on:!!p.on,
+    work:num(p.work,POMO_DEF.work,1,180),
+    brk:num(p.brk,POMO_DEF.brk,1,60),
+    long:num(p.long,POMO_DEF.long,1,120),
+    every:num(p.every,POMO_DEF.every,2,12),
+    round:(isFinite(+p.round)&&+p.round>0)?Math.floor(+p.round):0,
+    phase:(p.phase==='brk'||p.phase==='long')?p.phase:'work',
+    base:(isFinite(+p.base)&&+p.base>=0)?+p.base:0,
+    ms:(isFinite(+p.ms)&&+p.ms>0)?+p.ms:0
+  };
+  if(!out.ms) out.ms=pomoLen(out,out.phase)*60000;
+  return out;
+}
+function pomoLen(p,phase){
+  if(phase==='brk') return p.brk;
+  if(phase==='long') return p.long;
+  return p.work;
+}
+function pomoOn(){ return !!(S.pomo && S.pomo.on); }
+function pomoLeft(){
+  var p=S.pomo;
+  return Math.max(0, p.ms - (timerElapsed()-p.base));
+}
+function pomoPhaseName(){ return POMO_PHASE[S.pomo.phase] || '專注'; }
+function pomoTodayDone(){ return (S.pomoDone && +S.pomoDone[todayStr()]) || 0; }
+/* 開始新一節：輪數同階段重設（base 用 timerElapsed 做基準，開頭係 0） */
+function pomoReset(){
+  var p=S.pomo;
+  p.phase='work'; p.round=0; p.base=0; p.ms=p.work*60000;
+}
+function pomoAdvance(){
+  var p=S.pomo;
+  if(p.phase==='work'){
+    p.round++;
+    if(!S.pomoDone||typeof S.pomoDone!=='object') S.pomoDone={};
+    var ds=todayStr();
+    S.pomoDone[ds]=(typeof S.pomoDone[ds]==='number'?S.pomoDone[ds]:0)+1;
+    p.phase=(p.round % p.every===0) ? 'long' : 'brk';
+  } else {
+    p.phase='work';
+  }
+  p.ms=pomoLen(p,p.phase)*60000;
+}
+function pomoFlash(msg){
+  POMO_FLASH=msg;
+  if(POMO_FLASH_T) clearTimeout(POMO_FLASH_T);
+  POMO_FLASH_T=setTimeout(function(){ POMO_FLASH=null; pomoRedraw(); }, 12000);
+}
+/* 嗶聲用 WebAudio 即時合成，唔使加任何外部檔案（保持單檔 PWA）。
+   AudioContext 要喺用家手勢之後先開得聲，所以喺「開始」嗰刻就解鎖。 */
+function pomoUnlockAudio(){
+  try{
+    var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+    if(!POMO_CTX) POMO_CTX=new AC();
+    if(POMO_CTX.state==='suspended' && POMO_CTX.resume) POMO_CTX.resume();
+  }catch(e){}
+}
+function pomoBeep(up){
+  try{
+    if(!POMO_CTX) return;
+    if(POMO_CTX.state==='suspended' && POMO_CTX.resume) POMO_CTX.resume();
+    var t=POMO_CTX.currentTime;
+    var notes = up ? [660,880] : [880,660,880];
+    notes.forEach(function(f,i){
+      var o=POMO_CTX.createOscillator(), g=POMO_CTX.createGain();
+      o.type='sine'; o.frequency.value=f;
+      var a=t+i*0.20;
+      g.gain.setValueAtTime(0.0001,a);
+      g.gain.exponentialRampToValueAtTime(0.20,a+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,a+0.17);
+      o.connect(g); g.connect(POMO_CTX.destination);
+      o.start(a); o.stop(a+0.19);
+    });
+  }catch(e){}
+}
+/* 每次 tick 檢查有冇過階段；過咗就推進（可能一次過補幾段） */
+function pomoTick(){
+  if(!pomoOn() || !timerRunning()) return false;
+  var p=S.pomo, el=timerElapsed(), changed=false, guard=0;
+  while(el-p.base>=p.ms && guard<600){
+    p.base+=p.ms;
+    pomoAdvance();
+    changed=true; guard++;
+  }
+  /* 離開得太久（guard 用盡）就唔再補，直接對齊，免得數字亂跳 */
+  if(el-p.base>=p.ms) p.base=el;
+  if(changed){
+    var toBreak=(p.phase!=='work');
+    pomoFlash(toBreak
+      ? ('第 '+p.round+' 輪完成，休息 '+pomoLen(p,p.phase)+' 分鐘'+
+         (p.phase==='long'?'（長休）':''))
+      : '休息完，開始第 '+(p.round+1)+' 輪專注');
+    pomoBeep(toBreak);
+    save();
+    pomoRedraw();
+  }
+  return changed;
+}
+var POMO_SIG=null;
+function pomoRedraw(){
+  var el=document.getElementById('tmPomo');
+  if(!el){ POMO_SIG=null; return; }          /* 面板閂咗：下次開返要重畫 */
+  if(!pomoOn()){ el.hidden=true; POMO_SIG=null; return; }
+  el.hidden=false;
+  var p=S.pomo, run=timerRunning();
+  /* 每秒 tick 都會行到呢度，所以簽名一樣就唔好再寫 DOM */
+  var sig=p.phase+'|'+p.round+'|'+(run?1:0)+'|'+(POMO_FLASH||'')+'|'+
+          Math.ceil((run?pomoLeft():p.ms)/1000)+'|'+pomoTodayDone()+'|'+p.every;
+  if(sig===POMO_SIG) return;
+  POMO_SIG=sig;
+  var ph=document.getElementById('pomoPh');
+  if(ph){
+    ph.textContent=pomoPhaseName();
+    ph.className='pomo-ph '+(p.phase==='work'?'work':'rest');
+  }
+  var lf=document.getElementById('pomoLeft');
+  if(lf) lf.textContent = run ? fmtMS(pomoLeft()) : fmtMS(p.ms);
+  var dots=document.getElementById('pomoDots');
+  if(dots){
+    var n=p.every, done=p.round % n;
+    if(done===0 && p.round>0 && p.phase!=='work') done=n;   /* 啱啱完成一輪循環 */
+    var h='';
+    for(var i=0;i<n;i++) h+='<i class="'+(i<done?'on':'')+'"></i>';
+    dots.innerHTML=h;
+  }
+  var sub=document.getElementById('pomoSub');
+  if(sub){
+    if(POMO_FLASH) sub.innerHTML='<b>'+esc(POMO_FLASH)+'</b>';
+    else if(!run) sub.textContent='撳「開始」就入第 1 輪專注　·　'+p.work+'／'+p.brk+' 分鐘'+
+      '，每 '+p.every+' 輪長休 '+p.long+' 分鐘';
+    else sub.innerHTML='第 <b>'+(p.round+1)+'</b> 輪　·　今日完成 <b>'+pomoTodayDone()+'</b> 輪'+
+      (pomoTodayDone()>0?('　·　'+hTxt(pomoTodayDone()*p.work)+' 小時專注'):'');
+  }
+}
+function fmtMS(ms){
+  var s=Math.max(0,Math.ceil(ms/1000));
+  return Math.floor(s/60)+':'+p2(s%60);
+}
+function setPomoOn(on){
+  S.pomo.on=!!on;
+  if(S.pomo.on){
+    pomoReset();
+    pomoUnlockAudio();
+  }
+  TM_MSG=null; TM_LAST=null;
+  save(); tmBody(); pomoRedraw();
+}
+function setPomoOpt(k,v){
+  var lim={work:[1,180],brk:[1,60],long:[1,120],every:[2,12]}[k];
+  if(!lim) return;
+  var n=Math.round(+v);
+  if(!isFinite(n)) return;
+  S.pomo[k]=Math.max(lim[0],Math.min(lim[1],n));
+  S.pomo=normPomo(S.pomo);
+  if(!timerRunning()){ S.pomo.ms=pomoLen(S.pomo,S.pomo.phase)*60000; }
+  save(); pomoRedraw();
+}
+
 /* ---------- 溫書計時器 ---------- */
 var TIMER_TICK=null, TM_LAST=null, TM_MSG=null;
 function timerRunning(){ return typeof S.timerStart==='number' && S.timerStart>0; }
@@ -2198,6 +2648,7 @@ function tickTimer(on){
 function startTimer(){
   TM_MSG=null;
   S.timerAcc=0; S.timerStart=Date.now(); S.timerFrom=S.timerStart; S.timerDay=todayStr();
+  if(pomoOn()){ pomoReset(); pomoUnlockAudio(); }   /* 新一節 = 由第 1 輪專注重新開始 */
   save(); tickTimer(true); tmBody();
 }
 function pauseTimer(){
@@ -2227,6 +2678,10 @@ function stopTimer(record){
     S.studyLog[day]=logMin(day)+mins;          /* 加落嗰日嘅溫書時數 */
     if(!Array.isArray(S.studySessions)) S.studySessions=[];
     sess=makeSession(from,Date.now(),day,mins);
+    /* 分科：session 記住科目（週視圖／之後改科都用得返），
+       同時寫入 studySubj 拆帳。冇揀科就入「未指定」。 */
+    sess.subj=normSubj(S.timerSubj)||SUBJ_NONE;
+    subjAdd(day,sess.subj,mins);
     S.studySessions.push(sess);                /* 同時記低實際時段，週視圖會畫返出嚟 */
     ok=true;
   }
@@ -2234,20 +2689,56 @@ function stopTimer(record){
   tickTimer(false);
   TM_MSG = record
     ? (ok ? '已記錄 <b>'+fmtDurCn(ms)+'</b><br>'+
-            '<span class="tmsub">'+sess.s+'–'+sess.e+'　週視圖已加咗一段溫書 block<br>'+
+            '<span class="tmsub">'+sess.s+'–'+sess.e+
+            (sess.subj && sess.subj!==SUBJ_NONE ? '　·　'+esc(sess.subj) : '')+
+            '　週視圖已加咗一段溫書 block<br>'+
             ds2cn(day)+' 而家合計 '+hTxt(logMin(day))+' 小時</span>'
           : '今次唔夠 1 分鐘，冇記錄。')
     : '已丟棄，冇記錄。';
   save(); refreshAll(); tmBody();
 }
+/* 科目下拉：未指定 + 成績頁科目 + 課堂代號 + 用過嘅科目名 */
+function subjOptHtml(){
+  var cur=normSubj(S.timerSubj), opts=subjOptions();
+  if(cur && cur!==SUBJ_NONE && opts.indexOf(cur)<0) opts.push(cur);
+  opts.sort(function(a,b){ return a<b?-1:(a>b?1:0); });
+  var h='<option value=""'+(cur?'':' selected')+'>未指定</option>';
+  opts.forEach(function(s){
+    h+='<option value="'+esc(s)+'"'+(s===cur?' selected':'')+'>'+esc(s)+'</option>';
+  });
+  return h;
+}
 function tmBody(){
   var box=document.getElementById('tmBody'); if(!box) return;
   var st=timerState();
-  var h='<div class="tmclock '+(st==='run'?'run':st==='pause'?'pause':'')+
+  var h='<div class="tmmode" id="tmMode">'+
+        '<button type="button" class="tmm'+(pomoOn()?'':' on')+'" data-pomo="0">自由計時</button>'+
+        '<button type="button" class="tmm'+(pomoOn()?' on':'')+'" data-pomo="1">番茄鐘</button>'+
+        '</div>';
+  if(pomoOn()){
+    var p=S.pomo;
+    h+='<div class="pomo" id="tmPomo">'+
+       '<div class="pomo-top">'+
+         '<span class="pomo-ph work" id="pomoPh">專注</span>'+
+         '<b class="pomo-left" id="pomoLeft">'+fmtMS(p.ms)+'</b>'+
+         '<span class="pomo-dots" id="pomoDots"></span>'+
+       '</div>'+
+       '<div class="pomo-sub" id="pomoSub"></div>'+
+       '<div class="pomo-set">'+
+         '<label>專注<input type="number" id="pomoWork" min="1" max="180" step="5" value="'+p.work+'">分</label>'+
+         '<label>短休<input type="number" id="pomoBrk" min="1" max="60" step="1" value="'+p.brk+'">分</label>'+
+         '<label>長休<input type="number" id="pomoLong" min="1" max="120" step="5" value="'+p.long+'">分</label>'+
+         '<label>每<input type="number" id="pomoEvery" min="2" max="12" step="1" value="'+p.every+'">輪</label>'+
+       '</div>'+
+       '</div>';
+  }
+  h+='<div class="tmclock '+(st==='run'?'run':st==='pause'?'pause':'')+
         '" id="tmClock">'+fmtClock(timerElapsed())+'</div>'+
         '<div class="tmstate" id="tmState"></div>'+
         '<div class="tmsince" id="tmSince"></div>';
   if(TM_MSG) h+='<div class="tmresult">'+TM_MSG+'</div>';
+  h+='<div class="tmsubjrow"><span class="tslbl">溫書科目</span>'+
+     '<select class="tsel" id="tmSubj">'+subjOptHtml()+'</select></div>';
   h+='<div class="tmbtns" id="tmBtns"></div>';
   if(!TM_MSG && st==='idle'){
     h+='<div class="meta" style="margin-top:12px">開始溫書撳「開始」，溫完撳「結束並記錄」——'+
@@ -2256,10 +2747,29 @@ function tmBody(){
        '<b>可以放心離開呢個 App</b>：計時器係用「開始時間」去計，唔係靠一直開住個畫面。'+
        '鎖屏、切去其他 App、甚至完全熄咗瀏覽器，返嚟都會照計返。<br>'+
        '想一眼睇到？去<b>設定 →「App 圖示角標」</b>，可以喺主畫面個圖示右上角'+
-       '顯示<b>本節分鐘</b>或者<b>今日溫書時數</b>（取至最近分鐘）。</div>';
+       '顯示<b>本節分鐘</b>或者<b>今日溫書時數</b>（取至最近分鐘）。<br>'+
+       '想知<b>邊科溫得多</b>？上面揀「溫書科目」，記錄之後會喺週視圖嘅溫書卡拆帳。'+
+       '想有人逼你抖？切去<b>番茄鐘</b>。</div>';
   }
   box.innerHTML=h;
-  TM_LAST=null;      /* 強制重建按鈕 */
+  TM_LAST=null; POMO_SIG=null;      /* 強制重建按鈕同番茄條 */
+  var mm=document.getElementById('tmMode');
+  if(mm) mm.addEventListener('click',function(e){
+    var b=(e.target && e.target.closest) ? e.target.closest('[data-pomo]') : null;
+    if(!b) return;
+    var want=b.getAttribute('data-pomo')==='1';
+    if(want===pomoOn()) return;
+    if(timerRunning() && !confirm('轉去「'+(want?'番茄鐘':'自由計時')+'」會由第 1 輪重新開始。\n\n'+
+       '已經記錄咗嘅時數唔會受影響，而家呢節會繼續計。繼續？')) return;
+    setPomoOn(want);
+  });
+  var sel=document.getElementById('tmSubj');
+  if(sel) sel.addEventListener('change',function(){ S.timerSubj=normSubj(this.value); save(); });
+  [['pomoWork','work'],['pomoBrk','brk'],['pomoLong','long'],['pomoEvery','every']]
+  .forEach(function(pr){
+    var el=document.getElementById(pr[0]); if(!el) return;
+    el.addEventListener('change',function(){ setPomoOpt(pr[1],this.value); this.value=S.pomo[pr[1]]; });
+  });
   renderTimer();
 }
 function tmButtons(){
@@ -2286,15 +2796,21 @@ function tmButtons(){
   on('tmDrop',function(){ if(confirm('丟棄今次計時？唔會記錄。')) stopTimer(false); });
 }
 function renderTimer(){
+  pomoTick();                       /* 先檢查階段有冇過，可能已經推進／發通知 */
   var st=timerState(), ms=timerElapsed();
   var b=document.getElementById('btnTimer');
   if(b){
-    /* 取至最近分鐘（唔跳秒），一眼睇到跑咗幾耐 */
-    if(st==='run'){ b.textContent='⏱ '+fmtMin(ms); b.classList.add('rec'); }
+    /* 取至最近分鐘（唔跳秒），一眼睇到跑咗幾耐；
+       番茄模式就改為顯示「階段 + 剩餘」，因為倒數才係重點。 */
+    if(st==='run'){
+      b.textContent = pomoOn() ? (pomoPhaseName()+' '+fmtMS(pomoLeft())) : ('⏱ '+fmtMin(ms));
+      b.classList.add('rec');
+    }
     else { b.textContent='溫書計時'; b.classList.remove('rec'); }
   }
   var c=document.getElementById('tmClock');
   syncTitle(); syncBadge();   /* 面板閂咗都要更新：每秒 tick 都會行到呢度 */
+  pomoRedraw();
   if(!c){ TM_LAST=null; return; }
   c.textContent=fmtClock(ms);
   c.className='tmclock '+(st==='run'?'run':st==='pause'?'pause':'');
@@ -2306,6 +2822,8 @@ function renderTimer(){
       var t0=new Date((typeof S.timerFrom==='number'&&S.timerFrom>0)?S.timerFrom:S.timerStart);
       sc.innerHTML='由 <b>'+p2(t0.getHours())+':'+p2(t0.getMinutes())+'</b> 開始　·　'+
         '本節 <b>'+fmtMinCn(ms)+'</b>　·　今日已溫 <b>'+hTxt(todayStudyMin())+' 小時</b>'+
+        (pomoOn() ? '<br>番茄：<b>'+pomoPhaseName()+'</b> 仲有 <b>'+fmtMS(pomoLeft())+
+                    '</b>（第 '+(S.pomo.round+1)+' 輪）' : '')+
         '<br>離開 App、鎖屏、熄咗瀏覽器都照計';
     } else if(st==='pause'){
       sc.textContent='已暫停，撳「繼續」再計';
@@ -2363,7 +2881,10 @@ function syncBadge(){
 function syncTitle(){
   var base=S.title+' · '+termName();
   if(timerRunning()){
-    base='⏱ '+fmtMin(timerElapsed())+'　今日 '+hTxt(todayStudyMin())+' 小時　·　'+base;
+    base=(pomoOn()
+      ? (pomoPhaseName()+' '+fmtMS(pomoLeft()))
+      : ('⏱ '+fmtMin(timerElapsed())))
+      +'　今日 '+hTxt(todayStudyMin())+' 小時　·　'+base;
   }
   if(base!==TITLE_LAST){ TITLE_LAST=base; document.title=base; }
 }
@@ -5738,7 +6259,10 @@ function defaultState(){
     grades:{}, deadlines:[], gpa:[], gpaScale:null, diary:[], theme:'auto',
     studyMin:0, studyLog:{},
     timerStart:null, timerAcc:0, timerDay:null, timerFrom:null,
-    studySessions:[], acts:[],
+    studySessions:[], studySubj:{}, timerSubj:'',
+    pomo:{on:false,work:25,brk:5,long:15,every:4,round:0,phase:'work',base:0,ms:0},
+    pomoDone:{},
+    acts:[],
     terms:null, termIdx:0,
     badgeMode:'sess',  /* App 圖示角標：'sess' 本節計時 / 'day' 今日溫書時數 / 'off' 唔用 */
     seedDone:false
@@ -5779,6 +6303,25 @@ function boot(){
     return x&&typeof x==='object'&&typeof x.d==='string'&&
            typeof x.s==='string'&&typeof x.e==='string';
   });
+  /* 分科溫書：只保留 { 'YYYY-MM-DD': {科目: 正數分鐘} } 嘅形狀 */
+  if(!S.studySubj||typeof S.studySubj!=='object') S.studySubj={};
+  Object.keys(S.studySubj).forEach(function(ds){
+    var m=S.studySubj[ds];
+    if(!m||typeof m!=='object'){ delete S.studySubj[ds]; return; }
+    var clean={};
+    Object.keys(m).forEach(function(k){
+      var v=m[k];
+      if(typeof v==='number'&&isFinite(v)&&v>0) clean[normSubj(k)]=Math.round(v);
+    });
+    if(Object.keys(clean).length) S.studySubj[ds]=clean; else delete S.studySubj[ds];
+  });
+  if(typeof S.timerSubj!=='string') S.timerSubj='';
+  if(!S.pomoDone||typeof S.pomoDone!=='object') S.pomoDone={};
+  Object.keys(S.pomoDone).forEach(function(k){
+    var v=S.pomoDone[k];
+    if(typeof v!=='number'||!isFinite(v)||v<=0) delete S.pomoDone[k];
+  });
+  S.pomo=normPomo(S.pomo);
   if(!Array.isArray(S.acts)) S.acts=[];
   S.acts=S.acts.filter(function(x){
     return x&&typeof x==='object'&&typeof x.d==='string'&&
@@ -5871,7 +6414,7 @@ window.addEventListener('focus',function(){
 
   var isFile = location.protocol === 'file:';
   /* 呢個常數要同 sw.js 嘅 VERSION 一致；設定頁靠對比兩者判斷有冇新版 */
-  var APP_VER = 'v40';
+  var APP_VER = 'v41';
   var ua = navigator.userAgent || '';
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
                    || window.navigator.standalone === true;
