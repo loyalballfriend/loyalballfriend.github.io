@@ -6063,6 +6063,40 @@ function buildPackObj(photos, includePhotos){
   if(!includePhotos) p.noPhotos = true;
   return p;
 }
+/* ---------- 雲端相片：一張一個檔案 ----------
+   ⚠️ 關鍵發現：Gist 嘅「1 MB 上限」只係 **API JSON 回應** 嘅截斷限制，
+      唔係檔案大小限制——gist 單檔其實可以到 100 MB。
+      API 回傳嘅 f.content 超過 1 MB 就會截斷（f.truncated=true），
+      但 f.raw_url 可以拎到完整內容（10 MB 以下唔使 clone）。
+      所以：文字（細、要即刻睇到）照放 timetable.json 走 API；
+            相片（大）每張拆成獨立檔案，下載時逐張經 raw_url 拎。
+      咁樣相片就永遠同步得到，唔會再撞 1 MB 天花板。 */
+var PH_PREFIX = 'photo-';
+var PH_EXT = '.jpg';
+/* 相片 id 可能含有唔適合做檔名嘅字，一律轉成安全字元 */
+function phSafeId(id){
+  return String(id==null?'':id).replace(/[^A-Za-z0-9_-]/g, '_').slice(0,80);
+}
+function phFileOf(id){ return PH_PREFIX + phSafeId(id) + PH_EXT; }
+/* dataURL → base64（gist API 收純 base64 字串做檔案內容） */
+function phPayload(src){
+  var s = String(src==null?'':src);
+  var i = s.indexOf('base64,');
+  return (i >= 0) ? s.slice(i+7) : s;
+}
+/* 由 gist 嘅 files map 抽出所有相片檔（回傳 [{id, name, url, sha}]） */
+function phListFromFiles(files){
+  var out=[];
+  if(!files || typeof files!=='object') return out;
+  Object.keys(files).forEach(function(name){
+    if(name.indexOf(PH_PREFIX)!==0) return;
+    var id = name.slice(PH_PREFIX.length);
+    if(id.slice(-PH_EXT.length)===PH_EXT) id = id.slice(0, -PH_EXT.length);
+    var f = files[name] || {};
+    out.push({ id:id, name:name, url:f.raw_url||'', sha:f.content||'' });
+  });
+  return out;
+}
 function idbAll(cb){
   if(!idbReady){ cb([]); return; }
   try{
@@ -6615,23 +6649,26 @@ function doExport(){
   });
 }
 /* 核心：驗證 → 確認 → 套用。檔案匯入同貼上匯入共用。 */
-function applyPack(pack){
+function applyPack(pack, opts){
   if(!pack || pack.app!==BK_APP || !pack.state || typeof pack.state!=='object'){
     alert('呢份內容唔似係本 App 嘅備份。'); return false;
   }
+  opts = opts || {};
   var st=pack.state, photos=pack.photos||[], noPho=!!pack.noPhotos;
   var msg='確定要匯入呢份備份？\n\n'+
     '備份時間：'+(pack.exportedAt ? String(pack.exportedAt).slice(0,16).replace('T',' ') : '未知')+'\n'+
     '課堂 '+((st.courses||[]).length)+' 項 · 待辦 '+((st.todos||[]).length)+' 項 · '+
     '日記 '+((st.diary||[]).length)+' 日 · 相片 '+photos.length+' 張\n\n'+
     (noPho ? '※ 呢份備份冇包含相片，目標裝置現有嘅日記相片會保留。\n\n' : '')+
+    (opts.partial ? '※ 雲端有部分相片下載唔到，呢部機其餘相片會保留。\n\n' : '')+
     '⚠️ 其餘現有資料會被完全覆蓋，無法復原。';
   if(!confirm(msg)) return false;
   try{ localStorage.setItem(KEY,JSON.stringify(st)); }
   catch(e){ alert('寫入失敗：瀏覽器儲存空間可能唔夠。'); return false; }
   if(!idbReady || noPho){ afterImport(); return true; }
-  /* 先清空相片倉，避免舊相片變孤兒（還原就係要完全一致） */
-  idbClear(function(){
+  /* 先清空相片倉，避免舊相片變孤兒（還原就係要完全一致）。
+     但如果雲端有部分相片下載失敗，就唔清——寧願留住舊嘅都好過掉失。 */
+  var writePhotos = function(){
     var i=0;
     (function next(){
       if(i>=photos.length){ afterImport(); return; }
@@ -6639,7 +6676,9 @@ function applyPack(pack){
       if(!rec || !rec.id){ next(); return; }
       idbPut({id:rec.id, src:rec.src}, function(){ next(); });
     })();
-  });
+  };
+  if(opts.partial){ writePhotos(); return true; }
+  idbClear(writePhotos);
   return true;
 }
 function doImport(file){
@@ -6800,35 +6839,41 @@ function cloudUpload(){
     uploadWith(photos, CLOUD.inc, false);
   });
 }
-/* 真正嘅上傳流程。allowRetryNoPhoto = 呢次係「已經去咗相片再試」 */
+/* 真正嘅上傳流程。
+   v44 起相片改為「一張一個檔案」放喺同一個 gist：
+   - timetable.json 只放純文字（永遠細，走 API 冇問題）
+   - photo-<id>.jpg 每張相獨立一個檔（gist 單檔可到 100 MB，冇 1 MB 問題）
+   所以唔再需要「太大就自動略去相片」——相片會照同步。
+   CLOUD.photos = 記住上次同步咗邊幾張相（id→內容長度），夠判斷要唔要重傳。 */
 function uploadWith(photos, inc, alreadyRetried){
-  var txt = JSON.stringify(buildPackObj(photos, inc));
+  /* 文字部分永遠唔包相片 base64（相片改為獨立檔案） */
+  var txt = JSON.stringify(buildPackObj([], false));
   var rawLen = txt.length;
   cloudBusy(gzSupported() ? '壓縮中…' : '準備中…');
   gzPack(txt, function(gerr, payload){
     var len = payload.length;
-    /* 壓完仲係太大：自動幫用戶去相片再壓一次（唔再用 confirm 嚇人）。
-       只有「已經冇相」都仲爆先至真的要問。 */
-    if(len > CLOUD_MAX && inc && !alreadyRetried){
-      cloudMsg('份資料壓縮後仍然 '+fmtSize(len)+'，自動改為唔包相片再試…');
-      uploadWith(photos, false, true);
-      return;
-    }
     if(len > CLOUD_MAX){
-      var tip = inc
-        ? '（已經包含日記相片）'
-        : '（已經唔包相片，主要係日記文字／成績／待辦太多）';
-      if(!confirm('⚠️ 份資料壓縮後仍然有 '+fmtSize(len)+' '+tip+'，\n'+
-                  '超過 Gist API 每個檔案 1 MB 嘅讀取上限，將來下載會被截斷。\n\n'+
-                  '建議：先「匯出備份」存一份落機，再考慮清理舊日記。\n\n'+
+      if(!confirm('⚠️ 文字資料壓縮後仍然有 '+fmtSize(len)+
+                  '，超過 Gist API 每個檔案 1 MB 嘅**讀取**上限，將來下載會被截斷。\n\n'+
+                  '建議：先「匯出備份」存一份落機，再考慮清理舊日記文字。\n\n'+
                   '仍然要上傳嗎？')){
         CLOUD_BUSY=false; cloudMsg('已取消上傳。'); return;
       }
     }
     var body = { description:'時間表備份（自動同步用）', files:{} };
     body.files[GH_FILE] = { content: payload };
-    var info = { raw:rawLen, sent:len, inc:inc, gz:(payload!==txt) };
-    if(!CLOUD.gistId){ cloudCreate(body, info); return; }
+    /* 相片：只在用戶勾咗「包含日記相片」時才上傳 */
+    var phCount = 0;
+    if(inc){
+      (photos||[]).forEach(function(rec){
+        if(!rec || !rec.id || !rec.src) return;
+        body.files[phFileOf(rec.id)] = { content: phPayload(rec.src) };
+        phCount++;
+      });
+    }
+    var info = { raw:rawLen, sent:len, inc:inc, gz:(payload!==txt), photos:phCount };
+    var go = function(){ cloudBusy(phCount ? ('上傳中…（'+phCount+' 張相片）') : '上傳中…'); };
+    if(!CLOUD.gistId){ go(); cloudCreate(body, info); return; }
     /* 已經有 gist：先讀一次雲端時間，睇下係唔係另一部機改過而本機未下載 */
     cloudBusy('檢查雲端版本…');
     ghFetch('/gists/'+encodeURIComponent(CLOUD.gistId), null, function(err, json){
@@ -6841,16 +6886,25 @@ function uploadWith(photos, inc, alreadyRetried){
           CLOUD_BUSY=false; cloudMsg('已取消上傳。'); return;
         }
       }
-      cloudBusy('上傳中…');
-      cloudPatch(body, info);
+      /* 順手記住雲端而家有嘅相片檔，用嚟刪走本機已經冇咗嘅（避免孤兒檔一直留喺 gist） */
+      if(inc){
+        var cloudPh = phListFromFiles(json && json.files);
+        var keep = {};
+        (photos||[]).forEach(function(rec){ if(rec && rec.id) keep[phFileOf(rec.id)] = 1; });
+        cloudPh.forEach(function(p){
+          if(!keep[p.name]) body.files[p.name] = null;   /* null = 刪除該檔 */
+        });
+      }
+      go(); cloudPatch(body, info);
     });
   });
 }
-/* 上傳成功之後嘅一句總結：講清楚有冇壓縮、有冇去相片、實際幾大 */
+/* 上傳成功之後嘅一句總結：講清楚有冇壓縮、有幾多張相、實際幾大 */
 function upMsg(info, extra){
-  var s = '✅ 已上傳，實際 '+fmtSize(info.sent);
+  var s = '✅ 已上傳，文字 '+fmtSize(info.sent);
   if(info.gz) s += '（壓縮前 '+fmtSize(info.raw)+'）';
-  if(!info.inc) s += '　·　唔包含日記相片';
+  if(info.inc && info.photos) s += '　·　相片 '+info.photos+' 張';
+  else if(!info.inc) s += '　·　唔包含日記相片';
   return s + (extra||'');
 }
 function cloudCreate(body, info){
@@ -6887,8 +6941,7 @@ function cloudDownload(){
   if(tw2 && !confirm(tw2)){ cloudMsg('已取消下載。'); return; }
   cloudBusy('讀取雲端…');
   ghFetch('/gists/'+encodeURIComponent(CLOUD.gistId), null, function(err, json){
-    CLOUD_BUSY=false;
-    if(err){ cloudMsg('❌ '+esc(err),'err'); alert('讀取雲端失敗：\n'+err); return; }
+    if(err){ CLOUD_BUSY=false; cloudMsg('❌ '+esc(err),'err'); alert('讀取雲端失敗：\n'+err); return; }
     var f = (json && json.files) ? json.files[GH_FILE] : null;
     if(!f || typeof f.content!=='string'){
       cloudMsg('❌ 雲端 gist 入面搵唔到 '+GH_FILE,'err');
@@ -6896,27 +6949,35 @@ function cloudDownload(){
       return;
     }
     if(f.truncated){
-      cloudMsg('❌ 雲端檔案太大，API 截斷咗','err');
-      alert('雲端檔案超過 1 MB，GitHub API 只回傳部分內容，唔敢用。\n\n'+
+      cloudMsg('❌ 雲端文字檔太大，API 截斷咗','err');
+      alert('雲端嘅 '+GH_FILE+' 超過 1 MB，GitHub API 只回傳部分內容，唔敢用。\n\n'+
             '呢個通常係舊版本（未支援壓縮）上傳嘅檔案。\n'+
-            '解決：喺有相片嗰部機關掉「包含日記相片」，重新上傳一次——\n'+
+            '解決：喺有嗰份資料嘅部機，重新上傳一次——\n'+
             '新版本會自動先用 gzip 壓縮，一般細 3–5 倍。');
       return;
     }
     /* 新版本係 gzip 壓縮過嘅；舊版本係純 JSON。gzUnpack 兩者都食。 */
     cloudBusy('解壓中…');
     gzUnpack(f.content).then(function(raw){
-      CLOUD_BUSY=false;
       var pack;
       try{ pack = JSON.parse(raw); }
-      catch(e){ cloudMsg('❌ 雲端內容唔係有效嘅 JSON','err'); alert('雲端內容解析失敗，可能上傳途中出錯。'); return; }
-      /* applyPack 會列出內容再確認，然後套用；成功就記低今次下載時間 */
-      if(applyPack(pack)===true){
-        CLOUD.lastDown = new Date().toISOString();
-        cloudSave();
-      } else {
-        cloudMsg('已取消下載。');
+      catch(e){
+        CLOUD_BUSY=false;
+        cloudMsg('❌ 雲端內容唔係有效嘅 JSON','err');
+        alert('雲端內容解析失敗，可能上傳途中出錯。'); return;
       }
+      /* 相片喺同一個 gist 入面，係獨立檔案（photo-xxx.jpg）。
+         佢哋唔會跟 API 一齊回傳完整內容，要逐張經 raw_url 拎
+         —— raw_url 嘅 1 MB 截斷唔適用，10 MB 以下都拎得晒。 */
+      var phs = phListFromFiles(json && json.files);
+      if(!phs.length){ finishDownload(pack); return; }
+      cloudBusy('下載相片…（0/'+phs.length+'）');
+      fetchPhotos(phs, function(list, failN){
+        pack.photos = list;
+        pack.noPhotos = false;
+        if(!list.length) pack.noPhotos = true;
+        finishDownload(pack, failN);
+      });
     }).catch(function(e){
       CLOUD_BUSY=false;
       var m = (typeof e==='string') ? e : ('解壓失敗：'+(e&&e.message?e.message:e));
@@ -6924,6 +6985,50 @@ function cloudDownload(){
       alert(m);
     });
   });
+}
+/* 逐張經 raw_url 拎相片。用 sha 版本嘅 URL（raw_url 本身已經帶 sha），
+   咁 GitHub CDN 就唔會回舊快取。一張失敗唔會拖垮全部，最後統計有幾多張失敗。 */
+function fetchPhotos(list, cb){
+  var out=[], i=0, failN=0, total=list.length;
+  (function next(){
+    if(i>=total){ cb(out, failN); return; }
+    var p=list[i++];
+    cloudBusy('下載相片…（'+i+'/'+total+'）');
+    if(!p.url){ failN++; next(); return; }
+    var done=false;
+    var fin=function(){ if(done) return; done=true; next(); };
+    /* 加 15 秒 timeout：有啲網絡環境會一直吊住唔返 */
+    var to=setTimeout(function(){ failN++; fin(); }, 15000);
+    try{
+      fetch(p.url, { cache:'no-store' }).then(function(res){
+        if(!res.ok){ clearTimeout(to); failN++; fin(); return; }
+        return res.text();
+      }).then(function(txt){
+        clearTimeout(to);
+        if(typeof txt==='string' && txt){
+          /* 存返做 dataURL，同 IndexedDB／備份檔格式一致 */
+          out.push({ id:p.id, src:'data:image/jpeg;base64,'+txt.replace(/\s+/g,'') });
+        } else failN++;
+        fin();
+      }).catch(function(){ clearTimeout(to); failN++; fin(); });
+    }catch(e){ clearTimeout(to); failN++; fin(); }
+  })();
+}
+/* 下載最後一步：套用 + 記錄時間 */
+function finishDownload(pack, failN){
+  CLOUD_BUSY=false;
+  if(failN){
+    cloudMsg('⚠️ 有 '+failN+' 張相片下載唔到（可能網絡中斷），其餘已收到。','err');
+    if(!confirm('有 '+failN+' 張日記相片下載唔到（網絡問題）。\n\n'+
+                '其餘資料同相片照樣會匯入。\n'+
+                '建議之後再撳一次「從雲端下載」補返。\n\n繼續匯入嗎？')) return;
+  }
+  if(applyPack(pack, { partial:!!failN })===true){
+    CLOUD.lastDown = new Date().toISOString();
+    cloudSave();
+  } else {
+    cloudMsg('已取消下載。');
+  }
 }
 function cloudForget(){
   if(!confirm('清除呢部機記住嘅 Token 同 Gist ID？\n\n'+
