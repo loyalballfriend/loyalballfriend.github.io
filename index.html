@@ -1443,18 +1443,23 @@
         border-radius:9px;font-family:inherit;font-size:13.5px;color:var(--text);background:#fff}
   .clin+.clin{margin-top:8px}
   .clin:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-  /* 設定頁嘅 .fld label 係 display:block，會壓住 .cpchk 嘅 flex，所以要提高優先度 */
-  .fld label.cpchk{display:flex;align-items:center;gap:7px;margin-bottom:0;
-                   font-size:12.5px;font-weight:400;color:var(--text);
+  /* 設定頁嘅 .fld label 係 display:block，會壓住 .cpchk 嘅 flex，所以要提高優先度。
+     ⚠️ 唔可以用 align-items:center + 一個 display:block 嘅說明 span ——
+     說明會變成一個 flex item 同 checkbox 擠喺同一行，文字就會斷成「包含日 / 記相片」。
+     正確做法：flex-wrap + 說明 flex-basis:100% 逼佢自己開一行。 */
+  .fld label.cpchk{display:flex;flex-wrap:wrap;align-items:center;gap:7px;
+                   margin-bottom:0;font-size:12.5px;font-weight:400;color:var(--text);
                    cursor:pointer;user-select:none}
   .fld label.cpchk input{flex:0 0 auto;width:auto;padding:0;margin:0}
+  /* 相片選項本身唔夠位：呢個 label 有長說明，所以畀佢自己一行、唔同 .fld 爭位 */
+  .fld label.cpchk .cpchktx{flex:0 0 auto;white-space:nowrap}
   .clstat{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.65;text-align:center}
   .clstat b{color:var(--text);font-weight:500;font-variant-numeric:tabular-nums;word-break:break-all}
   .clstat.ok{color:#1d9e75}
   .clstat.bad{color:#d85a30}
   /* 雲端同步：相片選項嘅補充說明同大小提示 */
-  .fld label.cpchk .clnote{display:block;margin-top:3px;font-size:11.5px;font-weight:400;
-    color:var(--muted);line-height:1.55}
+  .fld label.cpchk .clnote{flex:1 0 100%;margin-top:3px;font-size:11.5px;font-weight:400;
+    color:var(--muted);line-height:1.55;white-space:normal;cursor:default}
   .clsz{margin-top:9px;padding:8px 10px;border-radius:8px;background:var(--bg2);
     font-size:11.5px;line-height:1.6;color:var(--muted)}
   .clsz b{color:var(--text);font-variant-numeric:tabular-nums}
@@ -6713,7 +6718,7 @@ var CLOUD_KEY = 'timetable-cloud-v1';
 var GH_API = 'https://api.github.com';
 var GH_FILE = 'timetable.json';
 var CLOUD_MAX = 900 * 1024;      /* 留 124 KB 緩衝；Gist API 每檔 1 MB 就會截斷 */
-var CLOUD = { token:'', gistId:'', inc:false, lastUp:'', lastDown:'' };
+var CLOUD = { token:'', gistId:'', inc:false, lastUp:'', lastDown:'', photos:{} };
 var CLOUD_MSG = null, CLOUD_BUSY = false;
 
 function cloudLoad(){
@@ -6727,6 +6732,9 @@ function cloudLoad(){
     if(typeof d.inc==='boolean') CLOUD.inc=d.inc;
     if(typeof d.lastUp==='string') CLOUD.lastUp=d.lastUp;
     if(typeof d.lastDown==='string') CLOUD.lastDown=d.lastDown;
+    /* 相片同步指紋（v46）。舊版冇呢個 key → 留空 {}
+       留空係安全嘅：第一次上傳會重傳全部相，之後就只傳有變嘅。 */
+    if(d.photos && typeof d.photos==='object' && !Array.isArray(d.photos)) CLOUD.photos=d.photos;
   }catch(e){}
 }
 function cloudSave(){
@@ -6842,9 +6850,10 @@ function cloudUpload(){
 /* 真正嘅上傳流程。
    v44 起相片改為「一張一個檔案」放喺同一個 gist：
    - timetable.json 只放純文字（永遠細，走 API 冇問題）
-   - photo-<id>.jpg 每張相獨立一個檔（gist 單檔可到 100 MB，冇 1 MB 問題）
-   所以唔再需要「太大就自動略去相片」——相片會照同步。
-   CLOUD.photos = 記住上次同步咗邊幾張相（id→內容長度），夠判斷要唔要重傳。 */
+   - photo-<id>.jpg 每張相獨立一個檔（gist 單檔可到 100 MB）
+   v46 起加差量上傳：只傳「雲端未有」或「內容變咗」嘅相。
+   CLOUD.photos = { 檔名: 內容指紋 }，記住上次成功同步咗嘅狀態，
+   唔改嘅相就唔重傳 —— 免得改一個待辦都要重推幾十 MB。 */
 function uploadWith(photos, inc, alreadyRetried){
   /* 文字部分永遠唔包相片 base64（相片改為獨立檔案） */
   var txt = JSON.stringify(buildPackObj([], false));
@@ -6867,23 +6876,39 @@ function uploadWith(photos, inc, alreadyRetried){
           所以相片數要封頂，唔係 PATCH 會直接失敗。
           文字檔佔 1 個，所以相片最多 299 張。 */
     var PH_MAX = 299;
-    var phCount = 0, phSkipped = 0;
+    var phCount = 0, phSkipped = 0, phSame = 0, phBytes = 0;
+    var sentNow = {};   /* 今次實際有傳（或確認雲端已有）嘅相 → 新嘅 CLOUD.photos */
     if(inc){
+      var prev = CLOUD.photos || {};
       var usable = (photos||[]).filter(function(rec){ return rec && rec.id && rec.src; });
       phSkipped = Math.max(0, usable.length - PH_MAX);
       usable.slice(0, PH_MAX).forEach(function(rec){
-        body.files[phFileOf(rec.id)] = { content: phPayload(rec.src) };
-        phCount++;
+        var name = phFileOf(rec.id);
+        var b64 = phPayload(rec.src);
+        /* 指紋：長度 + 頭尾各 48 字。同一張相唔會變，改過就一定唔同。
+           唔用整份內容做鍵，係因為幾百 KB 字串做 object key 會好食記憶體。 */
+        var fp = b64.length + ':' + b64.slice(0,48) + ':' + b64.slice(-48);
+        sentNow[name] = fp;
+        if(prev[name] === fp){ phSame++; return; }   /* 冇變 → 唔重傳 */
+        body.files[name] = { content:b64 };
+        phCount++; phBytes += b64.length;
       });
       if(phSkipped && !alreadyRetried){
         /* 唔靜靜哋略過：講清楚，等用戶知點解有啲相冇上到 */
         cloudMsg('⚠️ 相片有 '+usable.length+' 張，超過 gist 上限 299 張，'+
                  '今次只同步頭 '+PH_MAX+' 張。');
       }
+
     }
     var info = { raw:rawLen, sent:len, inc:inc, gz:(payload!==txt),
-                 photos:phCount, skipped:phSkipped };
-    var go = function(){ cloudBusy(phCount ? ('上傳中…（'+phCount+' 張相片）') : '上傳中…'); };
+                 photos:phCount, skipped:phSkipped, same:phSame,
+                 phBytes:phBytes, sentNow:sentNow };
+    var go = function(){
+      if(!phCount && phSame) cloudBusy('上傳中…（相片全部已同步，唔使重傳）');
+      else if(phCount) cloudBusy('上傳中…（'+phCount+' 張相片'+
+             (phSame ? '，'+phSame+' 張已同步' : '')+'）');
+      else cloudBusy('上傳中…');
+    };
     if(!CLOUD.gistId){ go(); cloudCreate(body, info); return; }
     /* 已經有 gist：先讀一次雲端時間，睇下係唔係另一部機改過而本機未下載 */
     cloudBusy('檢查雲端版本…');
@@ -6919,14 +6944,25 @@ function uploadWith(photos, inc, alreadyRetried){
     });
   });
 }
-/* 上傳成功之後嘅一句總結：講清楚有冇壓縮、有幾多張相、實際幾大 */
+/* 上傳成功之後嘅一句總結：講清楚有冇壓縮、有幾多張相、實際幾大、有幾多唔使重傳 */
 function upMsg(info, extra){
   var s = '✅ 已上傳，文字 '+fmtSize(info.sent);
   if(info.gz) s += '（壓縮前 '+fmtSize(info.raw)+'）';
-  if(info.inc && info.photos) s += '　·　相片 '+info.photos+' 張';
+  if(info.inc && info.photos)
+    s += '　·　相片 '+info.photos+' 張（'+fmtSize(info.phBytes)+'）';
+  else if(info.inc && info.same)
+    s += '　·　相片 '+info.same+' 張全部已同步，唔使重傳';
   else if(!info.inc) s += '　·　唔包含日記相片';
+  if(info.inc && info.photos && info.same)
+    s += '，另有 '+info.same+' 張已同步';
   if(info.skipped) s += '（另有 '+info.skipped+' 張因超過 gist 檔數上限冇同步）';
   return s + (extra||'');
+}
+/* 上傳成功：記住今次同步咗嘅相片指紋，下次先判斷得出邊張要重傳。
+   只喺真正成功（POST/PATCH 冇 err）之後才寫，失敗就唔好污染記錄。 */
+function rememberPhotos(info){
+  if(!info || !info.inc) return;
+  CLOUD.photos = info.sentNow || {};
 }
 function cloudCreate(body, info){
   ghFetch('/gists', { method:'POST', body:body }, function(err, json){
@@ -6934,6 +6970,7 @@ function cloudCreate(body, info){
     if(err){ cloudMsg('❌ '+esc(err),'err'); alert('建立 gist 失敗：\n'+err); return; }
     CLOUD.gistId = (json && json.id) ? json.id : '';
     CLOUD.lastUp = new Date().toISOString();
+    rememberPhotos(info);
     var url = (json && json.html_url) ? json.html_url : '';
     cloudSave(); drawSettings();
     cloudMsg(upMsg(info, '（開咗個新嘅私密 gist）')+
@@ -6946,6 +6983,7 @@ function cloudPatch(body, info){
     CLOUD_BUSY=false;
     if(err){ cloudMsg('❌ '+esc(err),'err'); alert('上傳失敗：\n'+err); return; }
     CLOUD.lastUp = new Date().toISOString();
+    rememberPhotos(info);
     cloudSave(); drawSettings();
     cloudMsg(upMsg(info)+'。','ok');
   });
@@ -7094,6 +7132,10 @@ function finishDownload(pack, failN){
   }
   if(applyPack(pack, { partial:!!failN })===true){
     CLOUD.lastDown = new Date().toISOString();
+    /* 本機而家同雲端一致，指紋要重算 —— 否則下次上傳會以為「同上次一樣」
+       而唔傳，但其實本機內容已經換咗（例如換咗部機／還原過）。
+       留空 {} 係最安全：下次上傳會重新確認一次全部相。 */
+    CLOUD.photos = {};
     cloudSave();
   } else {
     cloudMsg('已取消下載。');
@@ -7102,7 +7144,7 @@ function finishDownload(pack, failN){
 function cloudForget(){
   if(!confirm('清除呢部機記住嘅 Token 同 Gist ID？\n\n'+
               '雲端上嘅資料唔會被刪，只係呢部機唔再記得。')) return;
-  CLOUD = { token:'', gistId:'', inc:false, lastUp:'', lastDown:'' };
+  CLOUD = { token:'', gistId:'', inc:false, lastUp:'', lastDown:'', photos:{} };
   CLOUD_MSG = null;
   try{ if(canStore) localStorage.removeItem(CLOUD_KEY); }catch(e){}
   drawSettings();
@@ -7114,9 +7156,9 @@ function cloudFieldHtml(){
     '<input type="text" class="clin" id="clGist" autocomplete="off" spellcheck="false" '+
     'placeholder="Gist ID 或 gist 網址（留空＝第一次上傳時自動開一個）" value="'+esc(CLOUD.gistId)+'">'+
     '<label class="cpchk" style="margin-top:10px"><input type="checkbox" id="clInc"'+
-      (CLOUD.inc?' checked':'')+'>包含日記相片'+
-      '<span class="clnote">相片會每張獨立存放喺同一個 gist，唔受 1 MB 限制。'+
-      '第一次同步會耐啲，建議兩部機都用 Wi-Fi。</span></label>'+
+      (CLOUD.inc?' checked':'')+'><span class="cpchktx">包含日記相片</span>'+
+      '<span class="clnote">相片會每張獨立存放喺同一個 gist，唔受 1 MB 限制；'+
+      '改過嘅先會重傳，第一次同步會耐啲，建議用 Wi-Fi。</span></label>'+
     '<div class="clsz" id="clSize">'+
       '☁️ 文字會自動用 gzip 壓縮；相片每張獨立存放，冇 1 MB 上限。'+
     '</div>'+
@@ -7164,12 +7206,15 @@ function cloudSizeHint(){
   function paint(rawLen, realComp, phN, phBytes){
     var head = '☁️ 文字大概 <b>'+fmtSize(rawLen)+'</b>';
     if(realComp) head += '，壓縮後約 <b>'+fmtSize(realComp)+'</b>';
-    if(phN) head += '<br>相片 <b>'+phN+' 張</b>，約 <b>'+fmtSize(phBytes)+'</b>'+
-                    '（每張獨立存放，唔佔文字額度）';
+    if(phN) head += '<br>相片 <b>'+phN+' 張</b>，共約 <b>'+fmtSize(phBytes)+'</b>'+
+                    '（每張獨立存放，唔佔文字額度；<b>改過嘅先會重傳</b>）';
     else if(CLOUD.inc) head += '<br>暫時未有日記相片';
+    var known = CLOUD.photos ? Object.keys(CLOUD.photos).length : 0;
+    if(CLOUD.inc && known) head += '<br>上次同步咗 <b>'+known+'</b> 張，'+
+                                   '再上傳通常只傳新加嗰幾張。';
     el.innerHTML = head +
       (rawLen>CLOUD_MAX ? '<br>⚠️ 文字壓縮後仍然接近或超過 1 MB，'+
-                          '上傳後下載可能會被截斷，建議先匯出備份。' : '');
+                          '建議先匯出備份。' : '');
   }
   /* 底數：先計文字部分（唔使等 IndexedDB） */
   var base = JSON.stringify(buildPackObj([], false)).length;
@@ -7757,7 +7802,7 @@ window.addEventListener('focus',function(){
 
   var isFile = location.protocol === 'file:';
   /* 呢個常數要同 sw.js 嘅 VERSION 一致；設定頁靠對比兩者判斷有冇新版 */
-  var APP_VER = 'v45';
+  var APP_VER = 'v46';
   var ua = navigator.userAgent || '';
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
                    || window.navigator.standalone === true;
