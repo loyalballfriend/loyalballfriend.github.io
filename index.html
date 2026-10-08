@@ -1722,7 +1722,7 @@ var PAL_DARK = {
   gray  :{bg:'#232936',bd:'#93A0B4',tx:'#C2CBDA',name:'灰'}
 };
 var PAL = PAL_LIGHT;
-var TAGS = {class:'固定課堂', study:'溫書時段', sess:'計時記錄', exam:'考試'};
+var TAGS = {class:'固定課堂', study:'溫書時段', sess:'計時記錄', exam:'考試', other:'其他'};
 /* 匯出 .ics 相關：提醒分鐘數（0 = 唔加 VALARM）、上次匯出結果（設定頁顯示用） */
 var ICS_ALARM = 10;
 var ICS_LAST = null;
@@ -7802,7 +7802,7 @@ window.addEventListener('focus',function(){
 
   var isFile = location.protocol === 'file:';
   /* 呢個常數要同 sw.js 嘅 VERSION 一致；設定頁靠對比兩者判斷有冇新版 */
-  var APP_VER = 'v46';
+  var APP_VER = 'v47';
   var ua = navigator.userAgent || '';
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
                    || window.navigator.standalone === true;
