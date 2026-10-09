@@ -133,6 +133,8 @@
   .wkstudy .ws-num{font-size:20px;font-weight:700;color:var(--text);
                    font-variant-numeric:tabular-nums;line-height:1.1}
   .wkstudy .ws-unit{font-size:12px;color:var(--muted)}
+  /* 「1 小時 53 分」嘅數字／單位要用 3px 貼實（父層 .ws-top 係 gap:7px，會太鬆） */
+  .wkstudy .ws-hm{display:inline-flex;align-items:baseline;gap:3px}
   .wkstudy .ws-pill{margin-left:auto;font-size:11.5px;font-weight:600;border-radius:20px;
                     padding:3px 10px;white-space:nowrap}
   .wkstudy .ws-pill.ok{background:#e6f6ee;color:#0f6e56}
@@ -226,6 +228,7 @@
   .wa-num{font-size:20px;font-weight:700;color:var(--text);
           font-variant-numeric:tabular-nums;line-height:1.1}
   .wa-unit{font-size:12px;color:var(--muted)}
+  .wa-hm{display:inline-flex;align-items:baseline;gap:3px}
   .wa-note{font-size:11.5px;color:#a8b1c0}
   .wa-add{margin-left:auto;padding:4px 12px;font-size:12px;flex:0 0 auto}
   .wa-list{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
@@ -1986,10 +1989,40 @@ function isToday(d){ return ymd(new Date())===ymd(d); }
 /* ================= 每週溫書時數 ================= */
 /* 下限：S.studyMin（分鐘／每星期）。0 或未設 = 唔追蹤。 */
 function studyMinMin(){ var v=+S.studyMin; return (isFinite(v)&&v>0)?v:0; }
-/* 分鐘 → 小時字串，去掉尾隨 0（180 → '3'、150 → '2.5'、45 → '0.75'） */
+/* 分鐘 → 小時字串，去掉尾隨 0（180 → '3'、150 → '2.5'、45 → '0.75'）
+   ⚠ 只留返畀「窄位」用（月曆格、下限輸入）。卡片同訊息一律用 hmText()：
+   用戶睇「1.88 小時」要心算，唔直觀。 */
 function hTxt(min){
   var s=(Math.max(0,min)/60).toFixed(2).replace(/\.?0+$/,'');
   return s===''?'0':s;
+}
+/* 分鐘 → 中文時長（唔用小數）：'1 小時 53 分'、'53 分'、'3 小時'、'0 分'。
+   呢個係用戶實際睇到嘅寫法，一眼睇得出係幾耐。 */
+function hmText(min){
+  var m=Math.max(0,Math.round(min||0));
+  if(m<1) return '0 分';
+  var h=Math.floor(m/60), r=m%60;
+  if(h && r) return h+' 小時 '+r+' 分';
+  return h ? h+' 小時' : r+' 分';
+}
+/* 分鐘 → 窄位用嘅短寫：2 小時 → '2'、1 小時 53 分 → '1:53'、45 分 → '45分'、0 → '0'。
+   週格得 34px 闊，寫唔落「1 小時 53 分」，所以整點唔顯示 ':00' 慳位。 */
+function hmShort(min){
+  var m=Math.max(0,Math.round(min||0));
+  if(m<1) return '0';
+  var h=Math.floor(m/60), r=m%60;
+  if(!r) return String(h);
+  return h ? (h+':'+p2(r)) : (r+'分');
+}
+/* 分鐘 → HTML：數字用大號、單位用細號（配合原本 .ws-num/.wa-num 嘅視覺）。
+   用 span 包住係因為父層 .ws-top 有 gap:7px，唔包就會每段都隔開 7px 太鬆。 */
+function hmHtml(min, numCls, unitCls){
+  var m=Math.max(0,Math.round(min||0));
+  var h=Math.floor(m/60), r=m%60, out='';
+  if(h) out+='<b class="'+numCls+'">'+h+'</b><span class="'+unitCls+'">小時</span>';
+  if(r) out+='<b class="'+numCls+'">'+r+'</b><span class="'+unitCls+'">分</span>';
+  if(!h && !r) out+='<b class="'+numCls+'">0</b><span class="'+unitCls+'">分</span>';
+  return out;
 }
 /* 課表上排定嘅溫書時段（計埋例外／改時間，已取消嘅唔計） */
 function schedOfDay(d){
@@ -2216,12 +2249,12 @@ function drawStudy(mon0){
   el.hidden=false;
   var cls=studyCls(w.total,w.min);
   var h='<div class="ws-top"><span class="ws-lbl">本週溫書</span>'+
-    '<b class="ws-num">'+hTxt(w.total)+'</b>'+
-    '<span class="ws-unit">'+(w.min>0?(' / '+hTxt(w.min)+' 小時'):' 小時')+'</span>';
+    '<span class="ws-hm">'+hmHtml(w.total,'ws-num','ws-unit')+'</span>'+
+    (w.min>0?('<span class="ws-unit ws-goal"> / '+hTxt(w.min)+' 小時</span>'):'');
   if(w.min>0){
     h+='<span class="ws-pill '+cls+'">'+
-       (w.total>=w.min ? '達標 +'+hTxt(w.total-w.min)+' 小時'
-                       : '差 '+hTxt(w.min-w.total)+' 小時')+'</span>';
+       (w.total>=w.min ? '達標 +'+hmText(w.total-w.min)
+                       : '差 '+hmText(w.min-w.total))+'</span>';
   } else {
     h+='<span class="ws-pill none">未設下限</span>';
   }
@@ -2238,9 +2271,9 @@ function drawStudy(mon0){
   }
   if(w.sTot>0 || w.lTot>0){
     var parts=[];
-    if(w.sTot>0) parts.push('課表排定 '+hTxt(w.sTot)+' 小時');
-    if(w.lTot>0) parts.push((w.sessT>0?'記錄':'手動記錄')+' '+hTxt(w.lTot)+' 小時'+
-      (w.sessT>0 ? '（其中計時 '+hTxt(w.sessT)+' 小時）' : ''));
+    if(w.sTot>0) parts.push('課表排定 '+hmText(w.sTot));
+    if(w.lTot>0) parts.push((w.sessT>0?'記錄':'手動記錄')+' '+hmText(w.lTot)+
+      (w.sessT>0 ? '（其中計時 '+hmText(w.sessT)+'）' : ''));
     /* 只有課表一個來源就冇必要拆開講；但有計時器記錄就一定講清楚 */
     if(parts.length>=2 || w.sessT>0) h+='<div class="ws-split">'+parts.join(' ＋ ')+'</div>';
   }
@@ -2250,8 +2283,9 @@ function drawStudy(mon0){
   } else {
     h+='<div class="ws-days">';
     for(var i=0;i<7;i++){
-      h+='<span class="ws-d'+(w.days[i]>0?' on':'')+'">'+DOW1[i]+
-         '<b>'+hTxt(w.days[i])+'</b></span>';
+      h+='<span class="ws-d'+(w.days[i]>0?' on':'')+'" title="'+DOW1[i]+'：'+
+         hmText(w.days[i])+'">'+DOW1[i]+
+         '<b>'+hmShort(w.days[i])+'</b></span>';
     }
     h+='</div>';
   }
@@ -2264,14 +2298,14 @@ function drawStudy(mon0){
          '<button type="button" data-scope="week"'+(SUBJ_SCOPE==='week'?' class="on"':'')+'>本週</button>'+
          '<button type="button" data-scope="all"'+(SUBJ_SCOPE==='all'?' class="on"':'')+'>全部</button>'+
        '</span>'+
-       '<span class="ws-subj-tot">'+hTxt(sk.total)+' 小時</span></div>'+
+       '<span class="ws-subj-tot">'+hmText(sk.total)+'</span></div>'+
        '<div class="ws-subj-list">';
     sk.list.slice(0,6).forEach(function(x){
       var pct=sk.total>0?Math.round(x.m/sk.total*100):0;
       var isNone=(x.name===SUBJ_NONE);
       h+='<span class="ws-schip'+(isNone?' none':'')+'" title="'+esc(x.name)+'：'+
-         hTxt(x.m)+' 小時（'+pct+'%'+(isNone?'，未揀科目嘅記錄':'')+'）">'+
-         '<b>'+esc(x.name)+'</b><i>'+hTxt(x.m)+'</i>'+
+         hmText(x.m)+'（'+pct+'%'+(isNone?'，未揀科目嘅記錄':'')+'）">'+
+         '<b>'+esc(x.name)+'</b><i>'+hmText(x.m)+'</i>'+
          '<span class="ws-sbar"><em style="width:'+pct+'%"></em></span></span>';
     });
     if(sk.list.length>6) h+='<span class="ws-smore">＋'+(sk.list.length-6)+'</span>';
@@ -2297,14 +2331,14 @@ function drawActs(mon0){
   if(!list.length){ el.hidden=true; el.innerHTML=''; return; }
   el.hidden=false;
   var h='<div class="wa-top"><span class="wa-lbl">非溫書時間</span>'+
-    '<b class="wa-num">'+hTxt(tot)+'</b><span class="wa-unit">小時</span>'+
+    '<span class="wa-hm">'+hmHtml(tot,'wa-num','wa-unit')+'</span>'+
     '<span class="wa-note">'+list.length+' 種</span>'+
     '<button class="btn wa-add" id="waAdd">＋ 記錄做過咩</button></div>';
   h+='<div class="wa-list">';
   list.forEach(function(x){
     var pct=tot>0?Math.round(x.m/tot*100):0;
-    h+='<span class="wa-chip" title="'+esc(x.label)+'：'+hTxt(x.m)+' 小時（'+x.n+' 段）">'+
-       '<b>'+esc(x.label)+'</b><i>'+hTxt(x.m)+'</i>'+
+    h+='<span class="wa-chip" title="'+esc(x.label)+'：'+hmText(x.m)+'（'+x.n+' 段）">'+
+       '<b>'+esc(x.label)+'</b><i>'+hmText(x.m)+'</i>'+
        '<span class="wa-bar"><em style="width:'+pct+'%"></em></span></span>';
   });
   h+='</div>';
@@ -2386,14 +2420,14 @@ function $id(x){ return document.getElementById(x); }
 function actDur(){
   var d=$id('akDur'); if(!d) return;
   var m=spanMin($id('akFrom').value,$id('akTo').value);
-  d.textContent = m>0 ? (fmtDurCn(m*60000)+'（'+hTxt(m)+' 小時）') : '時間唔啱';
+  d.textContent = m>0 ? fmtDurCn(m*60000) : '時間唔啱';
   d.className='akdur'+(m>0?'':' bad');
 }
 /* 該日已有嘅記錄清單（可以改／刪） */
 function actList(){
   var box=$id('akList'); if(!box) return;
   var list=actsOn(AK_DAY);
-  var h='<div class="aklt">'+ds2cn(AK_DAY)+'　共 '+hTxt(actMin(AK_DAY))+' 小時</div>';
+  var h='<div class="aklt">'+ds2cn(AK_DAY)+'　共 '+hmText(actMin(AK_DAY))+'</div>';
   if(AK_MSG) h+='<div class="akmsg">'+AK_MSG+'</div>';
   if(!list.length){
     h+='<div class="aknone">呢日仲未有記錄。</div>';
@@ -2402,7 +2436,7 @@ function actList(){
       h+='<div class="akitem'+(x.id===AK_EDIT?' on':'')+'">'+
          '<span class="akt2">'+x.s+'–'+x.e+'</span>'+
          '<b class="akn">'+esc(x.label)+'</b>'+
-         '<i class="akm">'+hTxt(x.m)+' 小時</i>'+
+         '<i class="akm">'+hmText(x.m)+'</i>'+
          '<button class="akb" data-act="edit" data-id="'+x.id+'" title="修改">改</button>'+
          '<button class="akb del" data-act="del" data-id="'+x.id+'" title="刪除">✕</button>'+
          '</div>';
@@ -2441,7 +2475,7 @@ function actSave(){
     AK_EDIT=null;
   } else {
     S.acts.push({ id:uid(), d:AK_DAY, s:s, e:en, m:m, label:lab });
-    AK_MSG='已加入「'+esc(lab)+'」（'+hTxt(m)+' 小時）。';
+    AK_MSG='已加入「'+esc(lab)+'」（'+hmText(m)+'）。';
   }
   save(); refreshAll();
   actForm(AK_DAY, null, true);   /* keepMsg：保留「已加入／已更新」提示 */
@@ -2485,7 +2519,7 @@ function studyLogForm(){
        subjSelHtml(daySubj(ds),ds)+
        '</div>';
     if(sm>0){
-      h+='<div class="lgnote">⏱ 計時器記錄咗 '+hTxt(sm)+' 小時'+
+      h+='<div class="lgnote">⏱ 計時器記錄咗 '+hmText(sm)+
          (ses.length?'（'+ses.map(function(x){
             return x.s+'–'+x.e+(x.subj&&x.subj!==SUBJ_NONE?' '+x.subj:'');
          }).join('、')+'）':'')+
@@ -2713,7 +2747,7 @@ function pomoRedraw(){
     else if(!run) sub.textContent='撳「開始」就入第 1 輪專注　·　'+p.work+'／'+p.brk+' 分鐘'+
       '，每 '+p.every+' 輪長休 '+p.long+' 分鐘';
     else sub.innerHTML='第 <b>'+(p.round+1)+'</b> 輪　·　今日完成 <b>'+pomoTodayDone()+'</b> 輪'+
-      (pomoTodayDone()>0?('　·　'+hTxt(pomoTodayDone()*p.work)+' 小時專注'):'');
+      (pomoTodayDone()>0?('　·　'+hmText(pomoTodayDone()*p.work)+'專注'):'');
   }
 }
 function fmtMS(ms){
@@ -2814,7 +2848,7 @@ function stopTimer(record){
             '<span class="tmsub">'+sess.s+'–'+sess.e+
             (sess.subj && sess.subj!==SUBJ_NONE ? '　·　'+esc(sess.subj) : '')+
             '　週視圖已加咗一段溫書 block<br>'+
-            ds2cn(day)+' 而家合計 '+hTxt(logMin(day))+' 小時</span>'
+            ds2cn(day)+' 而家合計 '+hmText(logMin(day))+'</span>'
           : '今次唔夠 1 分鐘，冇記錄。')
     : '已丟棄，冇記錄。';
   save(); refreshAll(); tmBody();
@@ -2943,7 +2977,7 @@ function renderTimer(){
     if(st==='run'){
       var t0=new Date((typeof S.timerFrom==='number'&&S.timerFrom>0)?S.timerFrom:S.timerStart);
       sc.innerHTML='由 <b>'+p2(t0.getHours())+':'+p2(t0.getMinutes())+'</b> 開始　·　'+
-        '本節 <b>'+fmtMinCn(ms)+'</b>　·　今日已溫 <b>'+hTxt(todayStudyMin())+' 小時</b>'+
+        '本節 <b>'+fmtMinCn(ms)+'</b>　·　今日已溫 <b>'+hmText(todayStudyMin())+'</b>'+
         (pomoOn() ? '<br>番茄：<b>'+pomoPhaseName()+'</b> 仲有 <b>'+fmtMS(pomoLeft())+
                     '</b>（第 '+(S.pomo.round+1)+' 輪）' : '')+
         '<br>離開 App、鎖屏、熄咗瀏覽器都照計';
@@ -3006,7 +3040,7 @@ function syncTitle(){
     base=(pomoOn()
       ? (pomoPhaseName()+' '+fmtMS(pomoLeft()))
       : ('⏱ '+fmtMin(timerElapsed())))
-      +'　今日 '+hTxt(todayStudyMin())+' 小時　·　'+base;
+      +'　今日 '+hmText(todayStudyMin())+'　·　'+base;
   }
   if(base!==TITLE_LAST){ TITLE_LAST=base; document.title=base; }
 }
@@ -3088,7 +3122,7 @@ function drawWeek(){
       b.innerHTML='<b>'+iconHtml(e.code)+esc(e.code)+'</b>'+(e.sec?'<i>'+esc(e.sec)+'</i>':'')+
         '<em>'+e.start+'–'+e.end+
         (e.kind==='session'||e.kind==='act'
-          ? ' · '+hTxt(e.src&&e.src.m)+' 小時'
+          ? ' · '+hmText(e.src&&e.src.m)
           : (e.room?' · '+esc(e.room):''))+
         '</em>';
       b.dataset.id=e.id; b.dataset.kind=e.kind; b.dataset.date=e.date;
@@ -4297,9 +4331,9 @@ function summarySentence(z){
       (z.art.artists>1?('，成個月共 '+z.art.artists+' 位歌手'):'')+'）。');
   }
   if(z.noteDays) s.push('有 '+z.noteDays+' 日寫咗字，加埋 '+z.words+' 個字。');
-  if(z.stMin) s.push('今個月溫書 '+hTxt(z.stMin)+' 小時'+
-    (z.actM?('，另外 '+hTxt(z.actM)+' 小時做咗其他嘢'):'')+'。');
-  else if(z.actM) s.push('今個月有 '+hTxt(z.actM)+' 小時記錄咗做其他嘢。');
+  if(z.stMin) s.push('今個月溫書 '+hmText(z.stMin)+
+    (z.actM?('，另外 '+hmText(z.actM)+'做咗其他嘢'):'')+'。');
+  else if(z.actM) s.push('今個月有 '+hmText(z.actM)+'記錄咗做其他嘢。');
   if(z.kws.length) s.push('成日提到「'+
     z.kws.slice(0,3).map(function(k){ return k.k; }).join('」「')+'」。');
   if(z.best && z.worst && z.best.v!==z.worst.v)
@@ -4340,8 +4374,8 @@ function summaryText(mk){
   if(z.art && z.art.list.length) L.push('歌手：'+
     z.art.list.slice(0,5).map(function(x){ return x.name+'×'+x.n; }).join('、')+
     (z.art.artists>5?('　（共 '+z.art.artists+' 位）'):''));
-  if(z.stMin) L.push('溫書：'+hTxt(z.stMin)+' 小時（'+z.stDays+' 日）');
-  if(z.actM) L.push('非溫書：'+hTxt(z.actM)+' 小時（'+z.actN+' 段）');
+  if(z.stMin) L.push('溫書：'+hmText(z.stMin)+'（'+z.stDays+' 日）');
+  if(z.actM) L.push('非溫書：'+hmText(z.actM)+'（'+z.actN+' 段）');
   return L.filter(function(x){ return x; }).join('\n');
 }
 function msumCard(k, v, sub){
@@ -4386,7 +4420,7 @@ function drawMsum(){
     msumCard('記錄', z.days+' 日', '共 '+z.total+' 日'+(z.noteDays?(' · 寫字 '+z.noteDays+' 日'):''))+
     msumCard('心情', moodV, z.moods?('有評 '+z.moods+' 日'):'未評過')+
     msumCard('相片', z.ph+' 張', z.songs?('每日一歌 '+z.songs+' 首'):'')+
-    msumCard('溫書', hTxt(z.stMin)+' 小時', z.actM?('非溫書 '+hTxt(z.actM)+' 小時'):(z.stDays?('有溫 '+z.stDays+' 日'):''))+
+    msumCard('溫書', hmText(z.stMin), z.actM?('非溫書 '+hmText(z.actM)):(z.stDays?('有溫 '+z.stDays+' 日'):''))+
     '</div>';
 
   var sp=moodSpark(mk, z.moodList);
@@ -4964,15 +4998,15 @@ function openEvent(ds){
     var sdt=new Date(date+'T00:00:00');
     dlg.innerHTML='<h3>溫書計時記錄　<span style="font-size:12px;color:#0f766e">自動</span></h3>'+
       '<div class="bd"><div class="meta"><b>'+DOW[dow1(sdt)-1]+'</b>　'+ds2cn(date)+'<br>'+
-      '<b>'+e.start+' – '+e.end+'</b>　·　'+hTxt(sm)+' 小時<br>'+
+      '<b>'+e.start+' – '+e.end+'</b>　·　'+hmText(sm)+'<br>'+
       '呢段係用「溫書計時」開始／結束時自動記低嘅。</div>'+
       '<div class="choice"><button id="mDelSess"><b>刪除此記錄</b>'+
-      '<span>同時由嗰日嘅溫書時數扣返 '+hTxt(sm)+' 小時</span></button></div></div>'+
+      '<span>同時由嗰日嘅溫書時數扣返 '+hmText(sm)+'</span></button></div></div>'+
       '<div class="ft"><button class="btn" id="mClose">關閉</button></div>';
     modal.hidden=false;
     document.getElementById('mClose').addEventListener('click',closeModal);
     document.getElementById('mDelSess').addEventListener('click',function(){
-      if(!confirm('刪除呢段計時記錄？會扣返 '+hTxt(sm)+' 小時。')) return;
+      if(!confirm('刪除呢段計時記錄？會扣返 '+hmText(sm)+'。')) return;
       S.studySessions=(S.studySessions||[]).filter(function(x){ return x.id!==e.id; });
       var left=logMin(date)-sm;
       if(left>0) S.studyLog[date]=left; else delete S.studyLog[date];
@@ -4986,7 +5020,7 @@ function openEvent(ds){
     var adt=new Date(date+'T00:00:00');
     dlg.innerHTML='<h3>'+esc(e.code)+'　<span style="font-size:12px;color:#7b8699">非溫書</span></h3>'+
       '<div class="bd"><div class="meta"><b>'+DOW[dow1(adt)-1]+'</b>　'+ds2cn(date)+'<br>'+
-      '<b>'+e.start+' – '+e.end+'</b>　·　'+hTxt(am)+' 小時</div>'+
+      '<b>'+e.start+' – '+e.end+'</b>　·　'+hmText(am)+'</div>'+
       '<div class="choice">'+
       '<button id="mAEdit"><b>修改</b><span>改名、改時間</span></button>'+
       '<button id="mADel"><b>刪除</b><span>移除呢段記錄</span></button>'+
@@ -6237,7 +6271,7 @@ function searchAll(q){
   (S.studySessions||[]).forEach(function(x){
     if(!x.subj) return;
     add({ kind:'session', id:x.id, title:'溫書：'+x.subj,
-          sub:'溫書記錄　·　'+ds2cn(x.d)+'　·　'+x.s+'–'+x.e+'　·　'+hTxt(x.m)+' 小時',
+          sub:'溫書記錄　·　'+ds2cn(x.d)+'　·　'+x.s+'–'+x.e+'　·　'+hmText(x.m),
           _t:[x.subj,x.d].filter(Boolean).join(' '), go:{ view:'week', date:x.d } });
   });
 
@@ -6560,7 +6594,7 @@ function buildIcs(opts){
       if(!(b>a)) b=a+Math.max(1,x.m||0);
       evs.push({ uid:'s-'+x.id, date:x.d, start:x.s, mins:Math.max(1,b-a),
                  summary:'溫書'+(x.subj?('：'+x.subj):''),
-                 desc:'實際溫書 '+hTxt(x.m)+' 小時（由計時器記錄）。',
+                 desc:'實際溫書 '+hmText(x.m)+'（由計時器記錄）。',
                  cat:'溫書', alarm:0 });
     });
   }
@@ -7802,7 +7836,7 @@ window.addEventListener('focus',function(){
 
   var isFile = location.protocol === 'file:';
   /* 呢個常數要同 sw.js 嘅 VERSION 一致；設定頁靠對比兩者判斷有冇新版 */
-  var APP_VER = 'v47';
+  var APP_VER = 'v48';
   var ua = navigator.userAgent || '';
   var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
                    || window.navigator.standalone === true;
